@@ -1,93 +1,89 @@
-use crate::db::{doctor, patient};
-use crate::{error::Error, models::Patient};
-use sqlx::PgPool;
-use warp::{Filter, Rejection, Reply};
+use crate::db::patient;
+use crate::models::PatientQuery;
+use crate::{authentication::Claims, models::UpdatePatientForm};
+use actix_web::{get, put, web, HttpResponse};
+use serde_json::json;
 
-pub fn patient_routes(
-    pool: PgPool,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    get_patient(pool.clone()).or(create_patient(pool))
+#[get("/patients")]
+pub async fn get_patients(
+    data: web::Data<crate::AppState>,
+    query: web::Query<PatientQuery>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    // Check if user has doctor role
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor access required"
+        }));
+    }
+
+    match patient::get_patients(
+        &data.db,
+        query.search.clone(),
+        query.order_column.clone(),
+        query.order_dir.clone(),
+        query.length,
+        query.start,
+    )
+    .await
+    {
+        Ok(patients) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": patients,
+            "message": "Patients retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve patients: {}", e)
+        })),
+    }
 }
 
-fn get_patient(pool: PgPool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path!("api" / "patients" / i32)
-        .and(warp::get())
-        .and(with_db(pool))
-        .and_then(handle_get_patient)
+#[get("/patients/{id}")]
+pub async fn get_patient_by_id(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    // Check if user has doctor role
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor access required"
+        }));
+    }
+
+    match patient::get_patient_by_id(&data.db, path.into_inner()).await {
+        Ok(patients) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": patients,
+            "message": "Patients retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve patients: {}", e)
+        })),
+    }
 }
 
-fn create_patient(pool: PgPool) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-    warp::path!("api" / "patients")
-        .and(warp::post())
-        .and(json_body())
-        .and(with_db(pool))
-        .and_then(handle_create_patient)
+#[put("/patients/{id}")]
+pub async fn update_patient(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    update_req: web::Json<UpdatePatientForm>,
+) -> HttpResponse {
+    let patient_id = path.into_inner();
+
+    match patient::update_patient(&data.db, update_req.into_inner(), patient_id).await {
+        Ok(updated_patient) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": updated_patient,
+            "message": "Patient updated successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to update patient: {}", e)
+        })),
+    }
 }
-
-fn with_db(
-    pool: PgPool,
-) -> impl Filter<Extract = (PgPool,), Error = std::convert::Infallible> + Clone {
-    warp::any().map(move || pool.clone())
-}
-
-fn json_body() -> impl Filter<Extract = (Patient,), Error = warp::Rejection> + Clone {
-    warp::body::content_length_limit(1024 * 16).and(warp::body::json())
-}
-
-async fn handle_get_patient(patient_id: i32, pool: PgPool) -> Result<impl Reply, Rejection> {
-    let patient = patient::get_patient(&pool, patient_id)
-        .await
-        .map_err(|e| warp::reject::custom(e))?;
-    Ok(warp::reply::json(&patient))
-}
-
-async fn handle_create_patient(patient: Patient, pool: PgPool) -> Result<impl Reply, Rejection> {
-    patient::create_patient(&pool, &patient)
-        .await
-        .map_err(|e| warp::reject::custom(e))?;
-    Ok(warp::reply::with_status(
-        "Patient created successfully",
-        warp::http::StatusCode::CREATED,
-    ))
-}
-
-// pub fn hospital_routes(
-//     pool: PgPool,
-// ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-//     patient_routes(pool.clone())
-//         .or(doctor_routes(pool.clone()))
-//         .or(appointment_routes(pool.clone()))
-//         .or(department_routes(pool))
-// }
-
-// fn doctor_routes(
-//     pool: PgPool,
-// ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-//     get_doctor(pool.clone())
-//         .or(create_doctor(pool.clone()))
-//         .or(update_doctor(pool.clone()))
-//         .or(delete_doctor(pool))
-// }
-
-// fn appointment_routes(
-//     pool: PgPool,
-// ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-//     get_appointment(pool.clone())
-//         .or(create_appointment(pool.clone()))
-//         .or(update_appointment(pool.clone()))
-//         .or(delete_appointment(pool))
-// }
-
-// fn department_routes(
-//     pool: PgPool,
-// ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone {
-//     get_department(pool.clone())
-//         .or(create_department(pool.clone()))
-//         .or(update_department(pool.clone()))
-//         .or(delete_department(pool))
-// }
-
-// // Define CRUD operations for doctors, appointments, and departments
-// // (similar to the existing patient functions)
-
-// // Add more route handlers for other entities and operations
