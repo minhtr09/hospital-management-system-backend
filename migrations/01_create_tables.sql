@@ -30,8 +30,7 @@ create table tn_doctors
 	speciality_id int,
 	room_id int,
 	recovery_token varchar(255),
-	FOREIGN KEY (speciality_id) REFERENCES tn_specialities(id),
-	FOREIGN KEY (room_id) REFERENCES tn_rooms(id)
+	FOREIGN KEY (speciality_id) REFERENCES tn_specialities(id)
 );
 
 create table tn_patients
@@ -83,18 +82,26 @@ create table tn_appointment_records
 	FOREIGN KEY (appointment_id) REFERENCES tn_appointments(id)
 );
 
-create table tn_treatments
+create table tn_medical_records
 (
 	id serial primary key,
 	appointment_id int,
-	name varchar(50),
-	type varchar(20),
-	times int,
-	purpose varchar(50),
-	instruction varchar(255),
-	repeat_days varchar(255),
-	repeat_time varchar(5),
-	FOREIGN KEY (appointment_id) REFERENCES tn_appointments(id)
+	FOREIGN KEY (appointment_id) REFERENCES tn_appointments(id),
+	payment_status int,
+	patient_id int,
+	doctor_id int,
+	FOREIGN KEY (patient_id) REFERENCES tn_patients(id),
+	FOREIGN KEY (doctor_id) REFERENCES tn_doctors(id),
+	diagnosis varchar(255)
+);
+
+create table tn_invoices
+(
+	id serial primary key,
+	medical_record_id int,
+	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id),
+	time timestamp,
+	total_price int
 );
 
 create table tn_services
@@ -156,8 +163,25 @@ create table tn_booking_photo
 	FOREIGN KEY (booking_id) REFERENCES tn_booking(id)
 );
 
-create table tn_drugs
+create table tn_medicine
 (
 	id serial primary key,
-	name varchar(255)
+	name varchar(255),
+	price int,
+	unit varchar(20),
+	description text,
+	manufacture_date timestamp,
+	expiry_date timestamp,
+	side_effects varchar(255),
+	dosage varchar(255)
+);
+
+create table medicine_of_prescription
+(
+	id serial primary key,
+	medical_record_id int,
+	medicine_id int,
+	quantity int,
+	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id),
+	FOREIGN KEY (medicine_id) REFERENCES tn_medicine(id)
 );

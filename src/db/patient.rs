@@ -43,16 +43,23 @@ pub async fn get_patients(
 }
 
 pub async fn get_patient_by_id(pool: &PgPool, patient_id: i32) -> Result<Patient, sqlx::Error> {
-    sqlx::query_as!(
+    let mut patient = sqlx::query_as!(
         Patient,
         "SELECT * FROM tn_patients WHERE id = $1",
         patient_id
     )
     .fetch_one(pool)
-    .await
+    .await?;
+
+    patient.password = None;
+    Ok(patient)
 }
 
-pub async fn update_patient(pool: &PgPool, patient: UpdatePatientForm, id: i32) -> Result<Patient, sqlx::Error> {
+pub async fn update_patient(
+    pool: &PgPool,
+    patient: UpdatePatientForm,
+    id: i32,
+) -> Result<Patient, sqlx::Error> {
     sqlx::query_as!(
         Patient,
         "UPDATE tn_patients SET name = $1, phone = $2, birthday = $3, gender = $4, address = $5 WHERE id = $6 RETURNING *",

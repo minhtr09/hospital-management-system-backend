@@ -33,7 +33,7 @@ pub async fn login(
     let pool = &data.db;
 
     // Query the database using the authentication module
-    let credentials = match authentication::get_user_credentials(pool, &login_req).await {
+    let credentials: (i32, String, String) = match authentication::get_user_credentials(pool, &login_req).await {
         Ok(Some(creds)) => creds,
         Ok(None) => {
             return HttpResponse::Unauthorized().json(LoginResponse {
@@ -70,6 +70,8 @@ pub async fn login(
         role: login_req.login_type.clone(),
         exp: (Utc::now() + Duration::hours(24)).timestamp(),
     };
+
+    println!("{:?}", claims);
 
     let token = encode(
         &Header::default(),

@@ -1,184 +1,81 @@
+-- Specialties
+INSERT INTO tn_specialities (name, description, image) VALUES
+('Cardiology', 'Heart and cardiovascular system specialists', 'cardiology.jpg'),
+('Dermatology', 'Skin, hair, and nail specialists', 'dermatology.jpg'),
+('Pediatrics', 'Medical care for children and adolescents', 'pediatrics.jpg'),
+('Orthopedics', 'Bone and joint specialists', 'orthopedics.jpg');
 
-INSERT INTO tn_rooms (name, location)
-VALUES ('Phòng 101', 'Khu A, tầng 1');
+-- Rooms
+INSERT INTO tn_rooms (name, location) VALUES
+('Room 101', 'First Floor, East Wing'),
+('Room 102', 'First Floor, East Wing'),
+('Room 201', 'Second Floor, West Wing'),
+('Room 202', 'Second Floor, West Wing');
 
-INSERT INTO tn_specialities (name, description, image)
-VALUES ('Unknown', 'Chưa phân loại chuyên khoa', '');
+-- Doctors
+INSERT INTO tn_doctors (email, phone, password, name, description, price, role, active, avatar, create_at, update_at, speciality_id, room_id) VALUES
+('dr.smith@example.com', '1234567890', 'hashed_password_1', 'Dr. John Smith', 'Experienced cardiologist with 15 years of practice', 150, 'doctor', 1, 'smith.jpg', '2024-01-01', '2024-01-01', 1, 1),
+('dr.jones@example.com', '2345678901', 'hashed_password_2', 'Dr. Sarah Jones', 'Pediatric specialist focusing on early childhood care', 120, 'doctor', 1, 'jones.jpg', '2024-01-01', '2024-01-01', 3, 2),
+('dr.wilson@example.com', '3456789012', 'hashed_password_3', 'Dr. Michael Wilson', 'Dermatologist specializing in skin cancer treatment', 140, 'doctor', 1, 'wilson.jpg', '2024-01-01', '2024-01-01', 2, 3);
 
--- ############################################################################
--- ## bác sĩ với 3 vai trò khác nhau: ADMIN - SUPPORTER - MEMBER
--- ############################################################################
+-- Patients
+INSERT INTO tn_patients (email, phone, password, name, gender, birthday, address, avatar, create_at, update_at) VALUES
+('patient1@example.com', '4567890123', 'hashed_password_4', 'Alice Brown', 0, '1990-05-15', '123 Main St, City', 'alice.jpg', '2024-01-01', '2024-01-01'),
+('patient2@example.com', '5678901234', 'hashed_password_5', 'Bob Wilson', 1, '1985-08-22', '456 Oak Ave, Town', 'bob.jpg', '2024-01-01', '2024-01-01'),
+('patient3@example.com', '6789012345', 'hashed_password_6', 'Carol Davis', 0, '1995-03-10', '789 Pine Rd, Village', 'carol.jpg', '2024-01-01', '2024-01-01');
 
-INSERT INTO tn_doctors (email, phone, password, name, description, price, role, active, avatar, speciality_id, room_id, recovery_token)
-VALUES ('phongkaster@gmail.com', '0366253623', '$2y$10$nODDRAA4Y8OhAnrVoWtkuuTepjjGMAjsCUQWsX4zHU1JiGrguVdoK', 
-'Phong Kaster', 'Bác sĩ Phong', 159000, 'admin', 1,'', 1, 1, '');
+-- Services
+INSERT INTO tn_services (name, image, description) VALUES
+('General Checkup', 'checkup.jpg', 'Comprehensive health examination'),
+('Heart Screening', 'heart.jpg', 'Cardiovascular health assessment'),
+('Skin Consultation', 'skin.jpg', 'Dermatological examination and consultation');
 
-INSERT INTO tn_doctors (email, phone, password, name, description, price, role, active, avatar, speciality_id, room_id, recovery_token)
-VALUES ('phongkaster1@gmail.com', '0366253623', '$2y$10$nODDRAA4Y8OhAnrVoWtkuuTepjjGMAjsCUQWsX4zHU1JiGrguVdoK', 
-'Phong Kaster', 'Bác sĩ Phong', 159000, 'supporter', 1,'', 1, 1, '');
+-- Doctor and Service Relationships
+INSERT INTO tn_doctor_and_service (service_id, doctor_id) VALUES
+(1, 1), (2, 1), -- Dr. Smith provides checkups and heart screenings
+(1, 2), -- Dr. Jones provides checkups
+(1, 3), (3, 3); -- Dr. Wilson provides checkups and skin consultations
 
-INSERT INTO tn_doctors (email, phone, password, name, description, price, role, active, avatar, speciality_id, room_id, recovery_token)
-VALUES ('phongkaster2@gmail.com', '0366253623', '$2y$10$nODDRAA4Y8OhAnrVoWtkuuTepjjGMAjsCUQWsX4zHU1JiGrguVdoK', 
-'Phong Kaster', 'Bác sĩ Phong', 159000, 'member', 1,'', 1, 1, '');
+-- Bookings
+INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time, status, create_at, update_at) VALUES
+(1, 1, 'Alice Brown', '4567890123', 'Alice Brown', 0, '1990-05-15', '123 Main St, City', 'Annual checkup', '2024-02-01', '09:00', 'confirmed', '2024-01-15', '2024-01-15'),
+(2, 2, 'Bob Wilson', '5678901234', 'Bob Wilson', 1, '1985-08-22', '456 Oak Ave, Town', 'Heart palpitations', '2024-02-02', '10:30', 'confirmed', '2024-01-16', '2024-01-16');
 
-INSERT INTO tn_patients (email, phone, password, name, gender, birthday, address, avatar)
-VALUES ('emma@gmail.com', '0794104124', '$2y$10$nODDRAA4Y8OhAnrVoWtkuuTepjjGMAjsCUQWsX4zHU1JiGrguVdoK', 
-'Emma', 0, '2000-05-01', 'USA', '');
+-- Appointments
+INSERT INTO tn_appointments (booking_id, doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date, status, create_at, update_at) VALUES
+(1, 1, 1, 'Alice Brown', '1990-05-15', 'Annual checkup', '4567890123', 1, 1, '09:00', '2024-02-01', 'scheduled', '2024-01-15', '2024-01-15'),
+(2, 1, 2, 'Bob Wilson', '1985-08-22', 'Heart palpitations', '5678901234', 2, 2, '10:30', '2024-02-02', 'scheduled', '2024-01-16', '2024-01-16');
 
--- ############################################################################
--- ## 10 lịch hẹn được tạo ra để dễ làm kiểm thử
--- ############################################################################
+-- Appointment Records
+INSERT INTO tn_appointment_records (appointment_id, reason, description, status_before, status_after, create_at, update_at) VALUES
+(1, 'Schedule confirmation', 'Appointment scheduled successfully', 'pending', 'scheduled', '2024-01-15', '2024-01-15'),
+(2, 'Schedule confirmation', 'Appointment scheduled successfully', 'pending', 'scheduled', '2024-01-16', '2024-01-16');
 
-UPDATE tn_appointments
-SET date = '2022-11-03';
+-- Medical Records
+INSERT INTO tn_medical_records (appointment_id, payment_status, patient_id, doctor_id, diagnosis) VALUES
+(1, 1, 1, 1, 'Healthy, no significant issues found'),
+(2, 1, 2, 1, 'Mild tachycardia, prescribed beta blockers');
 
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (2, 1, 'Bệnh nhân 1', '2022-02-22', 'Mệt mỏi', '0791234567', 1, 1,'', '2022-11-02', 'cancelled');
+-- Invoices
+INSERT INTO tn_invoices (medical_record_id, time, total_price) VALUES
+(1, '2024-02-01 10:00:00', 150),
+(2, '2024-02-02 11:30:00', 200);
 
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (2, 1, 'Bệnh nhân 2', '2022-02-22', 'Mệt mỏi', '0791234567', 2, 2,'', '2022-11-02', 'cancelled');
+-- Medicine
+INSERT INTO tn_medicine (name, price, unit, description, manufacture_date, expiry_date, side_effects, dosage) VALUES
+('Aspirin', 10, 'tablet', 'Pain reliever and blood thinner', '2023-01-01', '2025-01-01', 'May cause stomach upset', '1-2 tablets every 4-6 hours'),
+('Metoprolol', 25, 'tablet', 'Beta blocker for heart conditions', '2023-06-01', '2025-06-01', 'May cause fatigue, dizziness', '1 tablet twice daily');
 
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 3', '2022-02-22', 'Mệt mỏi', '0791234567', 3, 3,'', '2022-11-02', 'verified');
+-- Medicine Prescriptions
+INSERT INTO medicine_of_prescription (medical_record_id, medicine_id, quantity) VALUES
+(2, 2, 60); -- Prescribing Metoprolol for patient with tachycardia
 
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 4', '2022-02-22', 'Mệt mỏi', '0791234567', 4, 4,'', '2022-11-02', 'verified');
+-- Notifications
+INSERT INTO tn_notifications (message, record_id, record_type, patient_id, is_read, create_at, update_at) VALUES
+('Your appointment has been confirmed', 1, 'appointment', 1, 0, '2024-01-15', '2024-01-15'),
+('Your appointment has been confirmed', 2, 'appointment', 2, 0, '2024-01-16', '2024-01-16');
 
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 5', '2022-02-22', 'Mệt mỏi', '0791234567', 5, 5,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 6', '2022-02-22', 'Mệt mỏi', '0791234567', 6, 6,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 7', '2022-02-22', 'Mệt mỏi', '0791234567', 7, 7,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 8', '2022-02-22', 'Mệt mỏi', '0791234567', 8, 8,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 9', '2022-02-22', 'Mệt mỏi', '0791234567', 9, 9,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 10', '2022-02-22', 'Mệt mỏi', '0791234567', 10, 10,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 11', '2022-02-22', 'Mệt mỏi', '0791234567', 11, 11,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 12', '2022-02-22', 'Mệt mỏi', '0791234567', 12, 12,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 13', '2022-02-22', 'Mệt mỏi', '0791234567', 13, 13,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 14', '2022-02-22', 'Mệt mỏi', '0791234567', 14, 14,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 15', '2022-02-22', 'Mệt mỏi', '0791234567', 15, 15,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 16', '2022-02-22', 'Mệt mỏi', '0791234567', 16, 16,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 17', '2022-02-22', 'Mệt mỏi', '0791234567', 17, 17,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 18', '2022-02-22', 'Mệt mỏi', '0791234567', 18, 18,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 19', '2022-02-22', 'Mệt mỏi', '0791234567', 19, 19,'', '2022-11-02', 'processing');
-
-INSERT INTO tn_appointments (doctor_id, patient_id, patient_name, patient_birthday, patient_reason, patient_phone, numerical_order, position, appointment_time, date ,status)
-VALUES (3, 1, 'Bệnh nhân 20', '2022-02-22', 'Mệt mỏi', '0791234567', 20, 20,'', '2022-11-02', 'processing');
-
--- ############################################################################
--- ## 7 lịch hẹn khám - BOOKING 
--- ############################################################################
-update tn_booking
-set appointment_date = '2022-11-08';
-
-update tn_booking
-set status = 'processing';
-
-update tn_booking
-set booking_name = 'Phong';
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 1, 'Phong', '0794104124', 'Emma', 0, '2000-01-01', 'Sweden', 'Khám thai định kì', '2022-11-06', '09:00', 'done');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 1, 'Phong', '0794104124', 'Jessica', 0, '2000-01-01', 'Sweden', 'Khám thai định kì', '2022-11-06', '09:00', 'done');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 2, 'Phong', '0794104124', 'Jeffrey Dahmer', 0, '2000-01-01', 'Sweden', 'Khám sức khỏe', '2022-11-06', '09:00', 'processing');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 2, 'Phong', '0794104124', 'Johnwick', 0, '2000-01-01', 'Sweden', 'Khám sức khỏe', '2022-11-06', '09:00', 'processing');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 2, 'Phong', '0794104124', 'Jeffrey Snow', 0, '2000-01-01', 'Sweden', 'Khám sức khỏe', '2022-11-06', '09:00', 'processing');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 2, 'Phong', '0794104124', 'John Snow', 0, '2000-01-01', 'Sweden', 'Khám sức khỏe', '2022-11-06', '09:00', 'processing');
-
-INSERT INTO tn_booking (service_id, patient_id, booking_name, booking_phone, name, gender, birthday, address, reason, appointment_date, appointment_time ,status)
-VALUES (1, 2, 'Phong', '0794104124', 'Bravo', 0, '2000-01-01', 'Sweden', 'Khám sức khỏe', '2022-11-06', '09:00', 'processing');
-
--- ############################################################################
--- ## Các dịch vụ khám bệnh
--- ############################################################################
-
-INSERT INTO tn_services(name)
-VALUES('Khám tổng quát');
-
-INSERT INTO tn_services(name)
-VALUES('Nhi khoa');
-
-INSERT INTO tn_services(name)
-VALUES('Chủng ngừa');
-
-INSERT INTO tn_services(name)
-VALUES('Sản phụ khoa');
-
-INSERT INTO tn_services(name)
-VALUES('Sức khỏe phụ nữ');
-
-INSERT INTO tn_services(name)
-VALUES('Nha khoa');
-
-INSERT INTO tn_services(name)
-VALUES('Nhãn khoa');
-
-INSERT INTO tn_services(name)
-VALUES('Tai mũi họng');
-
-INSERT INTO tn_services(name)
-VALUES('Tim mạch');
-
-INSERT INTO tn_services(name)
-VALUES('Nội tiết');
-
-INSERT INTO tn_services(name)
-VALUES('Thận & Tiết Niệu');
-
-INSERT INTO tn_services(name)
-VALUES('Tiêu hóa');
-
-INSERT INTO tn_services(name)
-VALUES('Hô hấp');
-
-INSERT INTO tn_services(name)
-VALUES('Thần kinh');
-
-INSERT INTO tn_services(name)
-VALUES('Nội khớp');
-
-INSERT INTO tn_services(name)
-VALUES('Da liệu');
-
-INSERT INTO tn_services(name)
-VALUES('Tầm soát STD');
-
-INSERT INTO tn_services(name)
-VALUES('Xét nghiệm PCR COVID-19');
+-- Booking Photos
+INSERT INTO tn_booking_photo (url, booking_id) VALUES
+('medical_report1.jpg', 1),
+('ecg_results.jpg', 2);
