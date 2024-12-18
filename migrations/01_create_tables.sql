@@ -51,28 +51,27 @@ create table tn_patients
 create table tn_appointments
 (
 	id serial primary key,
-	booking_id int,
-	doctor_id int,
-    patient_id int,
+	patient_id int,
 	patient_name varchar(50),
 	patient_birthday varchar(10),
 	patient_reason varchar(255),
-    patient_phone varchar(15),
+	patient_phone varchar(15),
 	numerical_order int,
-	position int,
 	appointment_time varchar(20),
-    date varchar(10),
+	date date,
 	status varchar(15),
 	create_at timestamp,
 	update_at timestamp,
-	FOREIGN KEY (doctor_id) REFERENCES tn_doctors(id),
-    FOREIGN KEY (patient_id) REFERENCES tn_patients(id)
+	speciality_id int,
+	FOREIGN KEY (patient_id) REFERENCES tn_patients(id),
 );
 
 create table tn_appointment_records
 (
 	id serial primary key,
 	appointment_id int,
+	doctor_id int,
+	room_id int,
 	reason varchar(100),
 	description text,
 	status_before varchar(255),
@@ -185,3 +184,6 @@ create table medicine_of_prescription
 	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id),
 	FOREIGN KEY (medicine_id) REFERENCES tn_medicine(id)
 );
+
+
+

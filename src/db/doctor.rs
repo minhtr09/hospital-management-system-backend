@@ -5,7 +5,7 @@ use sqlx::PgPool;
 pub async fn get_doctor(pool: &PgPool, email: String) -> Result<DoctorResponse, Error> {
     sqlx::query_as!(
         DoctorResponse,
-        "SELECT email, phone, name, description, price, role, avatar, create_at, update_at, specialty_id, room_id FROM tn_doctors WHERE email = $1",
+        "SELECT email, phone, name, description, price, role, avatar, speciality_id, room_id FROM tn_doctors WHERE email = $1",
         email
     )
     .fetch_one(pool)

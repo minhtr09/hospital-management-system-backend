@@ -1,4 +1,5 @@
-use crate::models::{Patient, UpdatePatientForm};
+use crate::models::{Patient, PatientForm, UpdatePatientForm};
+use chrono::NaiveDateTime;
 use sqlx::PgPool;
 
 pub async fn get_patients(
@@ -42,7 +43,7 @@ pub async fn get_patients(
     Ok(patients)
 }
 
-pub async fn get_patient_by_id(pool: &PgPool, patient_id: i32) -> Result<Patient, sqlx::Error> {
+pub async fn get_patient_by_id(pool: &PgPool, patient_id: &i32) -> Result<Patient, sqlx::Error> {
     let mut patient = sqlx::query_as!(
         Patient,
         "SELECT * FROM tn_patients WHERE id = $1",
@@ -67,4 +68,33 @@ pub async fn update_patient(
     )
     .fetch_one(pool)
     .await
+}
+
+pub async fn get_patient_id_by_email(pool: &PgPool, email: String) -> Result<i32, sqlx::Error> {
+    let patient_id = sqlx::query_scalar!("SELECT id FROM tn_patients WHERE email = $1", email)
+        .fetch_one(pool)
+        .await?;
+    Ok(patient_id)
+}
+
+pub async fn create_patient(pool: &PgPool, patient: PatientForm, create_at: NaiveDateTime, update_at: NaiveDateTime) -> Result<(), sqlx::Error> {
+    sqlx::query_as!(
+        Patient,
+        "INSERT INTO tn_patients (phone, name, gender, birthday, address, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        patient.phone, patient.name, patient.gender, patient.birthday, patient.address, create_at, update_at
+    )
+    .fetch_one(pool)
+    .await;
+    Ok(())
+}
+
+pub async fn get_patient_by_phone(pool: &PgPool, phone: String) -> Result<Patient, sqlx::Error> {
+    let patient = sqlx::query_as!(
+        Patient,
+        "SELECT * FROM tn_patients WHERE phone = $1",
+        phone
+    )
+    .fetch_one(pool)
+    .await?;
+    Ok(patient)
 }

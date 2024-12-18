@@ -1,4 +1,4 @@
-use chrono::NaiveDateTime;
+use chrono::{NaiveDate, NaiveDateTime};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 
@@ -46,15 +46,15 @@ pub struct Doctor {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct DoctorResponse {
-    pub email: String,
+    pub email: Option<String>,
     pub phone: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
     pub price: Option<i32>,
     pub role: Option<String>,
     pub avatar: Option<String>,
-    pub specialty_id: Option<i32>,
-    pub room: Option<Room>,
+    pub speciality_id: Option<i32>,
+    pub room_id: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -77,6 +77,15 @@ pub struct Patient {
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct PatientForm {
+    pub phone: Option<String>,
+    pub name: Option<String>,
+    pub gender: Option<i32>,
+    pub birthday: Option<String>,
+    pub address: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -120,21 +129,29 @@ pub struct Treatment {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Appointment {
-    pub id: i32,
-    pub booking_id: i32,
-    pub doctor_id: i32,
     pub patient_id: i32,
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,
     pub patient_reason: Option<String>,
+    pub specialty_id: Option<i32>,
     pub patient_phone: Option<String>,
     pub numerical_order: Option<i32>,
-    pub position: Option<i32>,
     pub appointment_time: String,
-    pub date: String,
     pub status: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
+    pub date: Option<NaiveDate>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AppointmentCreateForm {
+    pub patient_id: i32,
+    pub patient_name: String,
+    pub patient_birthday: String,
+    pub patient_phone: String,
+    pub patient_reason: String,
+    pub specialty_id: i32,
+    pub date: Option<NaiveDate>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -241,8 +258,7 @@ pub struct MedicalRecord {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Invoice {
-    pub id: i32,
-    pub medical_record_id: i32,
+    pub medical_record_id: Option<i32>,
     pub time: Option<NaiveDateTime>,
     pub total_price: Option<i32>,
 }

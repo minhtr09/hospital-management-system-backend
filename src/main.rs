@@ -2,7 +2,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routers::{authentication, patient};
+use routers::{appointment, authentication, patient, payment};
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
 use warp::Filter;
@@ -19,11 +19,25 @@ pub struct AppState {
 
 fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
     cfg.service(
-        web::scope("/api/information")
+        web::scope("/api/patient")
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(patient::get_patients)
             .service(patient::get_patient_by_id)
-            .service(patient::update_patient),
+            .service(patient::update_patient)
+            .service(patient::get_patient_by_phone)
+            .service(patient::create_patient),
+    )
+    .service(
+        web::scope("/api/appointment")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(appointment::create_appointment)
+            .service(appointment::get_appointments_of_patient),
+    )
+    .service(
+        web::scope("/api/payment")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(payment::get_invoices_of_medical_record)
+            .service(payment::create_invoice),
     )
     .service(
         web::scope("/api")

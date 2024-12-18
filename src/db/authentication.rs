@@ -6,11 +6,20 @@ pub async fn get_user_credentials(
     login_req: &LoginRequest,
 ) -> Result<Option<(i32, String, String)>, sqlx::Error> {
     let is_patient = login_req.login_type == "patient";
+    let is_doctor = login_req.login_type == "doctor";
+    let is_receptionist = login_req.login_type == "receptionist";
+    let is_staff = login_req.login_type == "staff";
 
     let query = if is_patient {
         "SELECT id, password, name FROM tn_patients WHERE email = $1"
-    } else {
+    } else if is_doctor {
         "SELECT id, password, name FROM tn_doctors WHERE email = $1"
+    } else if is_receptionist {
+        "SELECT id, password, name FROM tn_receptionist WHERE email = $1"
+    } else if is_staff {
+        "SELECT id, password, name FROM tn_staffs WHERE email = $1"
+    } else {
+        return Err(sqlx::Error::RowNotFound);
     };
 
     let row = sqlx::query(query)
@@ -37,8 +46,14 @@ pub async fn create_user(
 ) -> Result<(), sqlx::Error> {
     let query = if role == "doctor" {
         "INSERT INTO tn_doctors (email, password, name) VALUES ($1, $2, $3)"
-    } else {
+    } else if role == "receptionist" {
+        "INSERT INTO tn_receptionist (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "patient" {
         "INSERT INTO tn_patients (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "staff" {
+        "INSERT INTO tn_staffs (email, password, name) VALUES ($1, $2, $3)"
+    } else {
+        return Err(sqlx::Error::RowNotFound);
     };
 
     sqlx::query(query)
@@ -88,3 +103,5 @@ pub async fn user_exists(pool: &PgPool, email: &str, role: &str) -> Result<bool,
 
     Ok(count > 0)
 }
+
+
