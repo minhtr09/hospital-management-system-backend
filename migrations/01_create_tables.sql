@@ -21,7 +21,6 @@ create table tn_doctors
 	password varchar(255),
 	name varchar(50),
 	description varchar(255),
-	price int,
 	role varchar(10),
 	active int,
 	avatar varchar(255),
@@ -63,7 +62,7 @@ create table tn_appointments
 	create_at timestamp,
 	update_at timestamp,
 	speciality_id int,
-	FOREIGN KEY (patient_id) REFERENCES tn_patients(id),
+	FOREIGN KEY (patient_id) REFERENCES tn_patients(id)
 );
 
 create table tn_appointment_records
