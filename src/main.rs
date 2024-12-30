@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
@@ -12,6 +13,7 @@ mod error;
 mod middleware;
 mod models;
 mod routers;
+
 pub struct AppState {
     db: PgPool,
     jwt_secret: String,
@@ -49,21 +51,24 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // Load environment variables
-    dotenv::dotenv().ok();
+    dotenv().ok();
 
-    // Database connection
     let database_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
     let pool = PgPool::connect(&database_url)
         .await
         .expect("Failed to connect to Postgres");
 
-    // JWT secret
     let jwt_secret = std::env::var("JWT_SECRET").expect("JWT_SECRET must be set");
 
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .wrap(
+                Cors::default()
+                    .allowed_origin("http://localhost:3000")
+                    .allow_any_method()
+                    .allow_any_header()
+            )
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),
                 jwt_secret: jwt_secret.clone(),

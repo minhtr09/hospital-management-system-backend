@@ -33,13 +33,12 @@ pub struct Doctor {
     pub password: String,
     pub name: String,
     pub description: Option<String>,
-    pub price: Option<i32>,
     pub role: Option<String>,
     pub active: Option<i32>,
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
-    pub specialty_id: Option<i32>,
+    pub specialty_id: i32,
     pub room_id: Option<i32>,
     pub recovery_token: Option<String>,
 }
@@ -50,10 +49,9 @@ pub struct DoctorResponse {
     pub phone: Option<String>,
     pub name: Option<String>,
     pub description: Option<String>,
-    pub price: Option<i32>,
     pub role: Option<String>,
     pub avatar: Option<String>,
-    pub speciality_id: Option<i32>,
+    pub specialty_id: Option<i32>,
     pub room_id: Option<i32>,
 }
 

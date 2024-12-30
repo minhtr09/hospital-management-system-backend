@@ -21,7 +21,6 @@ create table tn_doctors
 	password varchar(255),
 	name varchar(50),
 	description varchar(255),
-	price int,
 	role varchar(10),
 	active int,
 	avatar varchar(255),
