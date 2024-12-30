@@ -63,7 +63,7 @@ create table tn_appointments
 	create_at timestamp,
 	update_at timestamp,
 	speciality_id int,
-	FOREIGN KEY (patient_id) REFERENCES tn_patients(id),
+	FOREIGN KEY (patient_id) REFERENCES tn_patients(id)
 );
 
 create table tn_appointment_records
