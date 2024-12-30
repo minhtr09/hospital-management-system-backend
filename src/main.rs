@@ -3,7 +3,8 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routers::{appointment, authentication, patient, payment};
+use routers::{appointment, authentication, patient, payment, specialty};
+use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
 use warp::Filter;
@@ -42,6 +43,15 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(payment::create_invoice),
     )
     .service(
+        web::scope("/api/specialty")
+            .service(specialty::get_specialties)
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(specialty::get_specialty_by_id)
+            .service(specialty::create_specialty)
+            .service(specialty::update_specialty)
+            .service(specialty::delete_specialty),
+    )
+    .service(
         web::scope("/api")
             .service(authentication::login)
             .service(authentication::register)
@@ -67,7 +77,7 @@ async fn main() -> std::io::Result<()> {
                 Cors::default()
                     .allowed_origin("http://localhost:3000")
                     .allow_any_method()
-                    .allow_any_header()
+                    .allow_any_header(),
             )
             .app_data(web::Data::new(AppState {
                 db: pool.clone(),

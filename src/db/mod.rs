@@ -5,4 +5,4 @@ pub mod patient;
 pub mod payment;
 pub mod staff;
 pub mod authentication;
-mod Authentication;
+pub mod specialty;
