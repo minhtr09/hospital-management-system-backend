@@ -26,12 +26,12 @@ pub async fn get_specialty(pool: &PgPool, id: i32) -> Result<Speciality, Error> 
     })
 }
 
-pub async fn create_specialty(pool: &PgPool, specialty: &Speciality) -> Result<(), Error> {
+pub async fn create_specialty(pool: &PgPool, speciality: &Speciality) -> Result<(), Error> {
     sqlx::query!(
         "INSERT INTO tn_specialities (name, description, image) VALUES ($1, $2, $3)",
-        specialty.name,
-        specialty.description,
-        specialty.image
+        speciality.name,
+        speciality.description,
+        speciality.image
     )
     .execute(pool)
     .await
@@ -39,12 +39,12 @@ pub async fn create_specialty(pool: &PgPool, specialty: &Speciality) -> Result<(
     Ok(())
 }
 
-pub async fn update_specialty(pool: &PgPool, id: i32, specialty: &Speciality) -> Result<(), Error> {
+pub async fn update_specialty(pool: &PgPool, id: i32, speciality: &Speciality) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE tn_specialities SET name = $1, description = $2, image = $3 WHERE id = $4",
-        specialty.name,
-        specialty.description,
-        specialty.image,
+        speciality.name,
+        speciality.description,
+        speciality.image,
         id
     )
     .execute(pool)
