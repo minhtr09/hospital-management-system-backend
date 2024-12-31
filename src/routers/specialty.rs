@@ -1,5 +1,5 @@
 use crate::db::specialty;
-use crate::models::Specialty;
+use crate::models::Speciality;
 use crate::AppState;
 use actix_web::{get, post, put, delete, web, HttpResponse};
 use crate::error::Error;
@@ -23,9 +23,9 @@ pub async fn get_specialty_by_id(data: web::Data<AppState>, path: web::Path<i32>
 }
 
 #[post("")]
-pub async fn create_specialty(
+pub async fn create_speciality(
     data: web::Data<AppState>,
-    body: web::Json<Specialty>,
+    body: web::Json<Speciality>,
 ) -> HttpResponse {
     match specialty::create_specialty(&data.db, &body.into_inner()).await {
         Ok(_) => HttpResponse::Ok().json("Specialty created successfully"),
@@ -34,10 +34,10 @@ pub async fn create_specialty(
 }
 
 #[put("/update")]
-pub async fn update_specialty(
+pub async fn update_speciality(
     data: web::Data<AppState>,
     path: web::Path<i32>,
-    body: web::Json<Specialty>,
+    body: web::Json<Speciality>,
 ) -> HttpResponse {
     match specialty::update_specialty(&data.db, path.into_inner(), &body.into_inner()).await {
         Ok(_) => HttpResponse::Ok().json("Specialty updated successfully"),

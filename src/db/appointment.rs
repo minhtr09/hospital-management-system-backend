@@ -26,14 +26,14 @@ pub async fn get_appointments_of_doctor(
 }
 
 pub async fn create_appointment(pool: &PgPool, appointment: Appointment) -> Result<(), Error> {
-    let query = "INSERT INTO tn_appointments (patient_id, patient_name, patient_birthday, patient_phone, patient_reason, specialty_id, date, numerical_order, appointment_time, status, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
+    let query = "INSERT INTO tn_appointments (patient_id, patient_name, patient_birthday, patient_phone, patient_reason, speciality_id, date, numerical_order, appointment_time, status, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
     sqlx::query(query)
         .bind(appointment.patient_id)
         .bind(appointment.patient_name)
         .bind(appointment.patient_birthday)
         .bind(appointment.patient_phone)
         .bind(appointment.patient_reason)
-        .bind(appointment.specialty_id)
+        .bind(appointment.speciality_id)
         .bind(appointment.date)
         .bind(appointment.numerical_order)
         .bind(appointment.appointment_time)
@@ -82,12 +82,12 @@ pub async fn update_appointment_time(
 pub async fn calculate_appointment_time(
     pool: &PgPool,
     date: Option<NaiveDate>,
-    specialty_id: Option<i32>,
+    speciality_id: Option<i32>,
 ) -> Result<(i64, NaiveTime), Error> {
     let numerical_order = sqlx::query_scalar!(
         "SELECT COUNT(*) + 1 FROM tn_appointments WHERE date = $1 AND speciality_id = $2",
         date,
-        specialty_id
+        speciality_id
     )
     .fetch_one(pool)
     .await

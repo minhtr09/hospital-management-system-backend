@@ -47,8 +47,8 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(specialty::get_specialties)
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(specialty::get_specialty_by_id)
-            .service(specialty::create_specialty)
-            .service(specialty::update_specialty)
+            .service(specialty::create_speciality)
+            .service(specialty::update_speciality)
             .service(specialty::delete_specialty),
     )
     .service(

@@ -5,7 +5,7 @@ use sqlx::PgPool;
 pub async fn get_doctor(pool: &PgPool, email: String) -> Result<DoctorResponse, Error> {
     sqlx::query_as!(
         DoctorResponse,
-        "SELECT email, phone, name, description, role, avatar,specialty_id, room_id FROM tn_doctors WHERE email = $1",
+        "SELECT email, phone, name, description, role, avatar, speciality_id, room_id FROM tn_doctors WHERE email = $1",
         email
     )
     .fetch_one(pool)
@@ -46,14 +46,14 @@ pub async fn get_doctors(
 
 pub async fn create_doctor(pool: &PgPool, doctor: &Doctor) -> Result<(), Error> {
     sqlx::query!(
-        "INSERT INTO tn_doctors (email, phone, name, description, role, avatar, specialty_id, room_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        "INSERT INTO tn_doctors (email, phone, name, description, role, avatar, speciality_id, room_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
         doctor.email,
         doctor.phone,
         doctor.name,
         doctor.description,
         doctor.role,
         doctor.avatar,
-        doctor.specialty_id,
+        doctor.speciality_id,
         doctor.room_id
     )
     .execute(pool)
@@ -64,13 +64,13 @@ pub async fn create_doctor(pool: &PgPool, doctor: &Doctor) -> Result<(), Error> 
 
 pub async fn update_doctor(pool: &PgPool, email: String, doctor: &Doctor) -> Result<(), Error> {
     sqlx::query!(
-        "UPDATE tn_doctors SET phone = $1, name = $2, description = $3, role = $4, avatar = $5, specialty_id = $6, room_id = $7 WHERE email = $8",
+        "UPDATE tn_doctors SET phone = $1, name = $2, description = $3, role = $4, avatar = $5, speciality_id = $6, room_id = $7 WHERE email = $8",
         doctor.phone,
         doctor.name,
         doctor.description,
         doctor.role,
         doctor.avatar,
-        doctor.specialty_id,
+        doctor.speciality_id,
         doctor.room_id,
         email
     )

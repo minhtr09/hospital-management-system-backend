@@ -31,7 +31,7 @@ pub async fn create_appointment(
     let (numerical_order, appointment_time) = match appointment::calculate_appointment_time(
         &data.db,
         appointment_form.date,
-        Some(appointment_form.specialty_id),
+        Some(appointment_form.speciality_id),
     )
     .await
     {
@@ -53,7 +53,7 @@ pub async fn create_appointment(
         patient_birthday: Some(appointment_form.patient_birthday),
         patient_phone: Some(appointment_form.patient_phone),
         patient_reason: Some(appointment_form.patient_reason),
-        specialty_id: Some(appointment_form.specialty_id),
+        speciality_id: Some(appointment_form.speciality_id),
         numerical_order: Some(numerical_order as i32),
         appointment_time: appointment_time.format("%H:%M").to_string(),
         status: Some("Scheduled".to_string()),

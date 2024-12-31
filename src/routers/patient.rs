@@ -67,7 +67,25 @@ pub async fn get_patient_by_id(
     }
 }
 
-#[put("/patients/{id}")]
+#[get("/{email}")]
+pub async fn get_patient_id_by_email(
+    data: web::Data<crate::AppState>,
+    email: web::Path<String>,
+) -> HttpResponse {
+    match patient::get_patient_id_by_email(&data.db, email.into_inner()).await {
+        Ok(patient_id) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": patient_id,
+            "message": "Patient ID retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve patient ID: {}", e)
+        })),
+    }
+}
+
+#[put("/{id}")]
 pub async fn update_patient(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,

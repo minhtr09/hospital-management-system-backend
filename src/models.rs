@@ -18,7 +18,7 @@ pub struct Room {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-pub struct Specialty {
+pub struct Speciality {
     pub id: i32,
     pub name: Option<String>,
     pub description: Option<String>,
@@ -38,7 +38,7 @@ pub struct Doctor {
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
-    pub specialty_id: i32,
+    pub speciality_id: i32,
     pub room_id: Option<i32>,
     pub recovery_token: Option<String>,
 }
@@ -51,7 +51,7 @@ pub struct DoctorResponse {
     pub description: Option<String>,
     pub role: Option<String>,
     pub avatar: Option<String>,
-    pub specialty_id: Option<i32>,
+    pub speciality_id: Option<i32>,
     pub room_id: Option<i32>,
 }
 
@@ -131,7 +131,7 @@ pub struct Appointment {
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,
     pub patient_reason: Option<String>,
-    pub specialty_id: Option<i32>,
+    pub speciality_id: Option<i32>,
     pub patient_phone: Option<String>,
     pub numerical_order: Option<i32>,
     pub appointment_time: String,
@@ -148,7 +148,7 @@ pub struct AppointmentCreateForm {
     pub patient_birthday: String,
     pub patient_phone: String,
     pub patient_reason: String,
-    pub specialty_id: i32,
+    pub speciality_id: i32,
     pub date: Option<NaiveDate>,
 }
 
