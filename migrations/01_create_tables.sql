@@ -200,4 +200,8 @@ create table medicine_of_prescription
 -- );
 
 
+-- Add column price to table tn_services
+ALTER TABLE tn_services ADD COLUMN price INTEGER;
+
+
 

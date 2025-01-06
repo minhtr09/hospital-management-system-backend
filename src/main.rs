@@ -3,7 +3,7 @@ use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routers::{appointment, authentication, medicine, patient, payment, specialty};
+use routers::{appointment, authentication, medicine, patient, payment, specialty, service};
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
@@ -52,6 +52,14 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(specialty::create_speciality)
             .service(specialty::update_speciality)
             .service(specialty::delete_specialty),
+    )
+    .service(
+        web::scope("/api/service")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(service::get_services)
+            .service(service::get_service_by_id)
+            .service(service::create_service)
+            .service(service::update_service),
     )
     .service(
         web::scope("/api/medicine")

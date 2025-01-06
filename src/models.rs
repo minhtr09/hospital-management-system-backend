@@ -5,9 +5,18 @@ use sqlx::FromRow;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Service {
     pub id: i32,
-    pub name: String,
+    pub name: Option<String>,
     pub image: Option<String>,
     pub description: Option<String>,
+    pub price: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ServiceCreateForm {
+    pub name: Option<String>,
+    pub price:  Option<i32>,
+    pub description: Option<String>,
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
