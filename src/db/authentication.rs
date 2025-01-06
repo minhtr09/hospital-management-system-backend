@@ -103,5 +103,3 @@ pub async fn user_exists(pool: &PgPool, email: &str, role: &str) -> Result<bool,
 
     Ok(count > 0)
 }
-
-

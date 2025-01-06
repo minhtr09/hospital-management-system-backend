@@ -1,4 +1,6 @@
-use crate::db::authentication;
+use std::ptr::null;
+
+use crate::db::{authentication, doctor, patient};
 use crate::models::{
     LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData,
 };
@@ -32,24 +34,27 @@ pub async fn login(
 ) -> HttpResponse {
     let pool = &data.db;
 
+    println!("login request: {:?}", login_req);
+
     // Query the database using the authentication module
-    let credentials: (i32, String, String) = match authentication::get_user_credentials(pool, &login_req).await {
-        Ok(Some(creds)) => creds,
-        Ok(None) => {
-            return HttpResponse::Unauthorized().json(LoginResponse {
-                success: false,
-                message: "Invalid credentials".to_string(),
-                data: None,
-            });
-        }
-        Err(_) => {
-            return HttpResponse::InternalServerError().json(LoginResponse {
-                success: false,
-                message: "Database error".to_string(),
-                data: None,
-            });
-        }
-    };
+    let credentials: (i32, String, String) =
+        match authentication::get_user_credentials(pool, &login_req).await {
+            Ok(Some(creds)) => creds,
+            Ok(None) => {
+                return HttpResponse::Unauthorized().json(LoginResponse {
+                    success: false,
+                    message: "Wrong email or password".to_string(),
+                    data: None,
+                });
+            }
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(LoginResponse {
+                    success: false,
+                    message: "Database error".to_string(),
+                    data: None,
+                });
+            }
+        };
 
     // Check if user exists
     let (id, hashed_password, name) = credentials;
@@ -221,3 +226,4 @@ pub async fn reset_password(
         })),
     }
 }
+

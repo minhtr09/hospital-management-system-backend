@@ -40,20 +40,32 @@ pub async fn get_patients(
     }
 }
 
+#[get("/self")]
+pub async fn get_self_patient(
+    data: web::Data<crate::AppState>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    let patient_id = claims.sub.parse::<i32>().unwrap();
+
+    match patient::get_patient_by_id(&data.db, &patient_id).await {
+        Ok(patient) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": patient,
+            "message": "Patient retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve patient: {}", e)
+        })),
+    }
+}
+
 #[get("/{id}")]
 pub async fn get_patient_by_id(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
-    // Check if user has doctor role
-    if claims.role != "staff" {
-        return HttpResponse::Forbidden().json(json!({
-            "success": false,
-            "message": "Staff access required"
-        }));
-    }
-
     match patient::get_patient_by_id(&data.db, &path.into_inner()).await {
         Ok(patients) => HttpResponse::Ok().json(json!({
             "success": true,
@@ -67,7 +79,25 @@ pub async fn get_patient_by_id(
     }
 }
 
-#[put("/patients/{id}")]
+#[get("email/{email}")]
+pub async fn get_patient_id_by_email(
+    data: web::Data<crate::AppState>,
+    email: web::Path<String>,
+) -> HttpResponse {
+    match patient::get_patient_id_by_email(&data.db, email.into_inner()).await {
+        Ok(patient_id) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": patient_id,
+            "message": "Patient ID retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve patient ID: {}", e)
+        })),
+    }
+}
+
+#[put("/{id}")]
 pub async fn update_patient(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
@@ -144,24 +174,3 @@ pub async fn get_patient_by_phone(
         })),
     }
 }
-
-#[get("/self")]
-pub async fn get_self_patient(
-    data: web::Data<crate::AppState>,
-    claims: web::ReqData<Claims>,
-) -> HttpResponse {
-    let patient_id = claims.sub.parse::<i32>().unwrap();
-
-    match patient::get_patient_by_id(&data.db, &patient_id).await {
-        Ok(patient) => HttpResponse::Ok().json(json!({
-            "success": true,
-            "data": patient,
-            "message": "Patient retrieved successfully"
-        })),
-        Err(e) => HttpResponse::InternalServerError().json(json!({
-            "success": false,
-            "message": format!("Failed to retrieve patient: {}", e)
-        })),
-    }
-}
-
