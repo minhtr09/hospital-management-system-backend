@@ -24,8 +24,25 @@ pub async fn create_appointment(
         return HttpResponse::Forbidden().json(json!({
             "success": false,
             "message": "Staff access required"
-        }));
+        }));    
     }
+
+    // Get patient information
+    let patient_info = match patient::get_patient_by_id(&data.db, &patient_id).await {
+        Ok(Some(patient)) => patient,
+        Ok(None) => {
+            return HttpResponse::NotFound().json(json!({
+                "success": false,
+                "message": "Patient profile not found"
+            }));
+        }
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": format!("Failed to fetch patient information: {}", e)
+            }));
+        }
+    };
 
     let appointment_form = body.into_inner();
     let (numerical_order, appointment_time) = match appointment::calculate_appointment_time(
