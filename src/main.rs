@@ -1,9 +1,10 @@
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
+use actix_web::web::service;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routers::{appointment, authentication, medicine, patient, payment, specialty, service};
+use routes::{appointment, authentication, medicine, patient, payment, service, specialty};
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
@@ -13,7 +14,7 @@ mod db;
 mod error;
 mod middleware;
 mod models;
-mod routers;
+mod routes;
 
 pub struct AppState {
     db: PgPool,
@@ -26,10 +27,11 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(patient::get_self_patient)
             .service(patient::get_patients)
+            .service(patient::get_patient_by_id)
             .service(patient::update_patient)
             .service(patient::get_patient_by_phone)
             .service(patient::create_patient)
-            .service(patient::get_patient_by_id),
+            .service(patient::get_patient_id_by_email),
     )
     .service(
         web::scope("/api/appointment")

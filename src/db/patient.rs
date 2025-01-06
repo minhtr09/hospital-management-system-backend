@@ -71,13 +71,19 @@ pub async fn update_patient(
 }
 
 pub async fn get_patient_id_by_email(pool: &PgPool, email: String) -> Result<i32, sqlx::Error> {
+    println!("{}", email);
     let patient_id = sqlx::query_scalar!("SELECT id FROM tn_patients WHERE email = $1", email)
         .fetch_one(pool)
         .await?;
     Ok(patient_id)
 }
 
-pub async fn create_patient(pool: &PgPool, patient: PatientForm, create_at: NaiveDateTime, update_at: NaiveDateTime) -> Result<(), sqlx::Error> {
+pub async fn create_patient(
+    pool: &PgPool,
+    patient: PatientForm,
+    create_at: NaiveDateTime,
+    update_at: NaiveDateTime,
+) -> Result<(), sqlx::Error> {
     sqlx::query_as!(
         Patient,
         "INSERT INTO tn_patients (phone, name, gender, birthday, address, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7)",
@@ -89,12 +95,8 @@ pub async fn create_patient(pool: &PgPool, patient: PatientForm, create_at: Naiv
 }
 
 pub async fn get_patient_by_phone(pool: &PgPool, phone: String) -> Result<Patient, sqlx::Error> {
-    let patient = sqlx::query_as!(
-        Patient,
-        "SELECT * FROM tn_patients WHERE phone = $1",
-        phone
-    )
-    .fetch_one(pool)
-    .await?;
+    let patient = sqlx::query_as!(Patient, "SELECT * FROM tn_patients WHERE phone = $1", phone)
+        .fetch_one(pool)
+        .await?;
     Ok(patient)
 }

@@ -191,7 +191,7 @@ pub struct Drug {
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     pub login_type: String,
     pub email: String,
@@ -204,6 +204,12 @@ pub struct LoginResponse {
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<TokenData>,
+}
+
+#[derive(Serialize)]
+pub struct AppointmentResponse {
+    pub appointment_time: String,
+    pub numerical_order: i32,
 }
 
 #[derive(Serialize)]
