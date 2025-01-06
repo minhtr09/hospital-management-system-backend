@@ -63,8 +63,8 @@ pub async fn update_patient(
 ) -> Result<Patient, sqlx::Error> {
     sqlx::query_as!(
         Patient,
-        "UPDATE tn_patients SET name = $1, phone = $2, birthday = $3, gender = $4, address = $5 WHERE id = $6 RETURNING *",
-        patient.name, patient.phone, patient.birthday, patient.gender, patient.address, id
+        "UPDATE tn_patients SET name = $1, phone = $2, birthday = $3, gender = $4, address = $5, email = $6 WHERE id = $7 RETURNING *",
+        patient.name, patient.phone, patient.birthday, patient.gender, patient.address,patient.email, id
     )
     .fetch_one(pool)
     .await

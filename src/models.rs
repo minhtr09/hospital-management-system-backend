@@ -242,6 +242,7 @@ pub struct UpdatePatientForm {
     pub birthday: Option<String>,
     pub gender: Option<i32>,
     pub address: Option<String>,
+    pub email: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -262,17 +263,31 @@ pub struct Invoice {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+
 pub struct Medicine {
     pub id: i32,
-    pub name: String,
-    pub price: Option<i32>,
-    pub unit: Option<String>,
-    pub description: Option<String>,
-    pub manufacture_date: Option<NaiveDateTime>,
-    pub expiry_date: Option<NaiveDateTime>,
-    pub side_effects: Option<String>,
-    pub dosage: Option<String>,
+    pub name: Option<String>,              
+    pub price: Option<i32>,              
+    pub unit: Option<String>,           
+    pub description: Option<String>,       
+    pub manufacture_date: Option<NaiveDateTime>,  
+    pub expiry_date: Option<NaiveDateTime>,       
+    pub side_effects: Option<String>,    
+    pub dosage: Option<String>,     
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MedicineCreateForm {
+    pub name: Option<String>,              
+    pub price: Option<i32>,              
+    pub unit: Option<String>,           
+    pub description: Option<String>,       
+    pub manufacture_date: Option<NaiveDateTime>,  
+    pub expiry_date: Option<NaiveDateTime>,       
+    pub side_effects: Option<String>,    
+    pub dosage: Option<String>,     
+}
+
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicineOfPrescription {

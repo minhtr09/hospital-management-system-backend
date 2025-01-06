@@ -44,7 +44,10 @@ pub async fn create_appointment(
         }
     };
 
-    println!("appointment_time: {:?}", appointment_time.format("%H:%M").to_string());
+    println!(
+        "appointment_time: {:?}",
+        appointment_time.format("%H:%M").to_string()
+    );
     println!("numerical_order: {:?}", Some(numerical_order as i32));
 
     let appointment = Appointment {
@@ -89,6 +92,33 @@ pub async fn get_appointments_of_patient(
 
     let patient_id = path.into_inner();
     match appointment::get_appointments_of_patient(&data.db, patient_id).await {
+        Ok(appointments) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Appointments fetched successfully",
+            "data": appointments
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to fetch appointments: {}", e)
+        })),
+    }
+}
+
+#[get("/{speciality_id}")]
+pub async fn get_appointments_by_speciality(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    if claims.role != "doctor" && claims.role != "staff" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor or Staff access required"
+        }));
+    }
+
+    let speciality_id = path.into_inner();
+    match appointment::get_appointments_by_speciality(&data.db, speciality_id).await {
         Ok(appointments) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Appointments fetched successfully",

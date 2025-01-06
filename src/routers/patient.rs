@@ -40,7 +40,7 @@ pub async fn get_patients(
     }
 }
 
-#[get("/{id}")]
+#[get("/p{id}")]
 pub async fn get_patient_by_id(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
@@ -168,7 +168,15 @@ pub async fn get_self_patient(
     data: web::Data<crate::AppState>,
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
-    let patient_id = claims.sub.parse::<i32>().unwrap();
+    let patient_id = match claims.sub.parse::<i32>() {
+        Ok(id) => id,
+        Err(_) => {
+            return HttpResponse::BadRequest().json(json!({
+                "success": false,
+                "message": "Invalid patient ID"
+            }));
+        }
+    };
 
     match patient::get_patient_by_id(&data.db, &patient_id).await {
         Ok(patient) => HttpResponse::Ok().json(json!({
