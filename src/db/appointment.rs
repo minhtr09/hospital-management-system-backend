@@ -1,14 +1,16 @@
-use crate::error::Error;
 use crate::models::Appointment;
-use chrono::{Duration, NaiveDateTime, NaiveDate, NaiveTime};
+use crate::{error::Error, models::AppointmentHistoryResponse};
+use chrono::{Duration, NaiveDate, NaiveTime};
 use sqlx::PgPool;
 
+#[allow(unused_variables)]
 pub async fn get_appointments_of_patient(
     pool: &PgPool,
     patient_id: i32,
 ) -> Result<Vec<Appointment>, Error> {
-    let query = "SELECT * FROM tn_appointments WHERE patient_id = $1";
-    sqlx::query_as::<_, Appointment>(query)
+    // println!("Fetching appointments for patient ID: {}", patient_id);
+    let query = "SELECT * FROM tn_appointments WHERE patient_id = $1 ORDER BY date DESC";
+    sqlx::query_as::<_, Appointment>(&query)
         .bind(patient_id)
         .fetch_all(pool)
         .await
@@ -20,49 +22,51 @@ pub async fn get_appointments_of_doctor(
     doctor_id: i32,
 ) -> Result<Vec<Appointment>, Error> {
     let query = "SELECT * FROM tn_appointments WHERE doctor_id = $1";
-    sqlx::query_as::<_, Appointment>(query)
-        .bind(doctor_id)
+    sqlx::query_as::<_, Appointment>(&query)
         .fetch_all(pool)
         .await
         .map_err(Error::Database)
 }
 
-pub async fn create_appointment(pool: &PgPool, appointment: Appointment) -> Result<(i32, i32, i32), Error> {
-    let query = "
-        INSERT INTO tn_appointments (
-            patient_id, patient_name, patient_birthday, patient_phone, 
-            patient_reason, speciality_id, date, numerical_order, 
-            appointment_time, status, create_at, update_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING id, numerical_order, speciality_id";
-    
-    let row = sqlx::query_as::<_, (i32, i32, i32)>(query)
+pub async fn create_appointment(pool: &PgPool, appointment: Appointment) -> Result<(), Error> {
+    let query = "INSERT INTO tn_appointments (patient_id, patient_name, patient_birthday, patient_phone, patient_reason, speciality_id, date, numerical_order, appointment_time, status, create_at, update_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)";
+    sqlx::query(query)
         .bind(appointment.patient_id)
-        .bind(&appointment.patient_name)
+        .bind(appointment.patient_name)
         .bind(appointment.patient_birthday)
-        .bind(&appointment.patient_phone)
-        .bind(&appointment.patient_reason)
+        .bind(appointment.patient_phone)
+        .bind(appointment.patient_reason)
         .bind(appointment.speciality_id)
         .bind(appointment.date)
         .bind(appointment.numerical_order)
-        .bind(&appointment.appointment_time)
-        .bind(&appointment.status)
+        .bind(appointment.appointment_time)
+        .bind(appointment.status)
         .bind(appointment.create_at)
         .bind(appointment.update_at)
-        .fetch_one(pool)
+        .execute(pool)
         .await
         .map_err(Error::Database)?;
-    
-    Ok(row) // Trả về tuple (id, numerical_order, speciality_id)
+    Ok(())
 }
 
+pub async fn get_appointments_by_speciality(
+    pool: &PgPool,
+    speciality_id: i32,
+) -> Result<Vec<Appointment>, Error> {
+    let query = "SELECT * FROM tn_appointments WHERE speciality_id = $1 ORDER BY date DESC";
+    sqlx::query_as::<_, Appointment>(&query)
+        .bind(speciality_id)
+        .fetch_all(pool)
+        .await
+        .map_err(Error::Database)
+}
 
 pub async fn update_appointment_status(
     pool: &PgPool,
     id: i32,
     status: String,
 ) -> Result<(), Error> {
-    let query = "UPDATE tn_appointments SET status = $1 WHERE id = $2";
+    let query: &str = "UPDATE tn_appointments SET status = $1 WHERE id = $2";
     sqlx::query(query)
         .bind(status)
         .bind(id)
@@ -71,14 +75,14 @@ pub async fn update_appointment_status(
         .map_err(Error::Database)?;
     Ok(())
 }
-
 pub async fn update_appointment_time(
     pool: &PgPool,
     id: i32,
     time: String,
     order: i32,
 ) -> Result<(), Error> {
-    let query = "UPDATE tn_appointments SET appointment_time = $1, numerical_order = $2 WHERE id = $3";
+    let query: &str =
+        "UPDATE tn_appointments SET appointment_time = $1, numerical_order = $2 WHERE id = $3";
     sqlx::query(query)
         .bind(time)
         .bind(order)
@@ -86,30 +90,50 @@ pub async fn update_appointment_time(
         .execute(pool)
         .await
         .map_err(Error::Database)?;
+
     Ok(())
 }
 
 pub async fn calculate_appointment_time(
     pool: &PgPool,
-    date: NaiveDate,
+    date: Option<NaiveDate>,
     speciality_id: Option<i32>,
-) -> Result<(u32, NaiveTime), Error> {
-    let base_time = NaiveTime::from_hms_opt(8, 0, 0).unwrap();
-    let appointment_duration = Duration::minutes(30);
-
-    let count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM tn_appointments WHERE date = $1 AND speciality_id = $2"
+) -> Result<(i64, NaiveTime), Error> {
+    let numerical_order = sqlx::query_scalar!(
+        "SELECT COUNT(*) + 1 FROM tn_appointments WHERE date = $1 AND speciality_id = $2",
+        date,
+        speciality_id
     )
-    .bind(date)
-    .bind(speciality_id)
     .fetch_one(pool)
     .await
-    .map_err(Error::Database)?;
+    .map_err(Error::Database)?
+    .unwrap_or(1);
 
-    let numerical_order = count + 1;
+    let base_time = NaiveTime::parse_from_str("07:00", "%H:%M").unwrap();
     let minutes_to_add = (numerical_order - 1) * 30;
     let appointment_time = base_time + Duration::minutes(minutes_to_add);
 
-    Ok((numerical_order as u32, appointment_time))
+    Ok((numerical_order, appointment_time))
 }
 
+pub async fn get_appointment_history(
+    pool: &PgPool,
+    patient_id: i32,
+) -> Result<Vec<AppointmentHistoryResponse>, Error> {
+    let query = "	SELECT 
+    a.id,                               
+    a.appointment_time, 
+	a.date,
+    a.numerical_order,                 
+    a.status,                           
+    COALESCE(s.name, '') as speciality_name        
+    FROM tn_appointments a
+    LEFT JOIN tn_specialities s ON a.speciality_id = s.id
+    WHERE a.patient_id = $1";
+
+    sqlx::query_as::<_, AppointmentHistoryResponse>(&query)
+        .bind(patient_id)
+        .fetch_all(pool)
+        .await
+        .map_err(Error::Database)
+}

@@ -4,20 +4,23 @@ use sqlx::{PgPool, Row}; // Make sure to import necessary models
 pub async fn get_user_credentials(
     pool: &PgPool,
     login_req: &LoginRequest,
-) -> Result<Option<(i32, String, String)>, sqlx::Error> {
+) -> Result<Option<(i32, String, String, Option<i32>)>, sqlx::Error> {
     let is_patient = login_req.login_type == "patient";
     let is_doctor = login_req.login_type == "doctor";
     let is_receptionist = login_req.login_type == "receptionist";
     let is_staff = login_req.login_type == "staff";
+    let is_admin = login_req.login_type == "admin";
 
     let query = if is_patient {
-        "SELECT id, password, name FROM tn_patients WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_patients WHERE email = $1"
     } else if is_doctor {
-        "SELECT id, password, name FROM tn_doctors WHERE email = $1"
+        "SELECT id, password, name, speciality_id FROM tn_doctors WHERE email = $1"
     } else if is_receptionist {
-        "SELECT id, password, name FROM tn_receptionist WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_receptionist WHERE email = $1"
     } else if is_staff {
-        "SELECT id, password, name FROM tn_staffs WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_staffs WHERE email = $1"
+    } else if is_admin {
+        "SELECT id, password, name, NULL as speciality_id FROM tn_admins WHERE email = $1"
     } else {
         return Err(sqlx::Error::RowNotFound);
     };
@@ -35,8 +38,14 @@ pub async fn get_user_credentials(
         );
     }
 
-    Ok(row.map(|row| (row.get("id"), row.get("password"), row.get("name"))))
+    Ok(row.map(|row| (
+        row.get("id"),
+        row.get("password"),
+        row.get("name"),
+        row.get("speciality_id")
+    )))
 }
+
 pub async fn create_user(
     pool: &PgPool,
     email: &str,
@@ -62,7 +71,6 @@ pub async fn create_user(
         .bind(name)
         .execute(pool)
         .await?;
-
     Ok(())
 }
 
@@ -104,4 +112,38 @@ pub async fn user_exists(pool: &PgPool, email: &str, role: &str) -> Result<bool,
     Ok(count > 0)
 }
 
+pub async fn get_role(pool: &PgPool, email: &str) -> Result<String, sqlx::Error> {
+    // Check in patients table
+    let patient_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM tn_patients WHERE email = $1")
+            .bind(email)
+            .fetch_one(pool)
+            .await?;
 
+    if patient_count > 0 {
+        return Ok("patient".to_string());
+    }
+
+    // Check in doctors table
+    let doctor_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tn_doctors WHERE email = $1")
+        .bind(email)
+        .fetch_one(pool)
+        .await?;
+
+    if doctor_count > 0 {
+        return Ok("doctor".to_string());
+    }
+
+    // Check in admins table
+    let admin_count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM tn_admins WHERE email = $1")
+        .bind(email)
+        .fetch_one(pool)
+        .await?;
+
+    if admin_count > 0 {
+        return Ok("admin".to_string());
+    }
+
+    // If email not found in any table
+    Err(sqlx::Error::RowNotFound)
+}
