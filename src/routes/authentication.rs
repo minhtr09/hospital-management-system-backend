@@ -4,7 +4,7 @@ use crate::db::{authentication, doctor, patient};
 use crate::models::{
     LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData, UserData,
 };
-use actix_web::{post, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -118,8 +118,14 @@ pub async fn register(
     data: web::Data<crate::AppState>,
     register_req: web::Json<RegisterRequest>,
 ) -> HttpResponse {
-    let pool = &data.db;
+    // if register_req.role != "patient" {
+    //     return HttpResponse::BadRequest().json(json!({
+    //         "success": false,
+    //         "message": "Only patient is supported for registration"
+    //     }));
+    // }
 
+    let pool = &data.db;
     // Hash the password
     let hashed_password = match hash(&register_req.password, DEFAULT_COST) {
         Ok(hashed) => hashed,
@@ -247,3 +253,15 @@ pub async fn reset_password(
     }
 }
 
+#[get("/role/{email}")]
+pub async fn get_role(data: web::Data<crate::AppState>, email: web::Path<String>) -> HttpResponse {
+    let pool = &data.db;
+    let email = email.into_inner();
+    match authentication::get_role(pool, &email).await {
+        Ok(role) => HttpResponse::Ok().json(role),
+        Err(_) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": "Failed to get role"
+        })),
+    }
+}

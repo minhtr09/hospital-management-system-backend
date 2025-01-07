@@ -4,7 +4,10 @@ use actix_web::web::service;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routes::{appointment, authentication, medicine, patient, payment, service, specialty};
+use routes::{
+    appointment, authentication, doctor, medical_record, medicine, patient, payment, service,
+    specialty,
+};
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
@@ -40,6 +43,7 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(appointment::get_appointments_of_patient)
             .service(appointment::get_appointments_by_specialty)
             .service(appointment::update_appointment_status)
+            .service(appointment::get_self_appointments),
     )
     .service(
         web::scope("/api/payment")
@@ -73,10 +77,23 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(medicine::delete_medicine),
     )
     .service(
+        web::scope("/api/medical-record")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(medical_record::get_self_medical_records)
+            .service(medical_record::update_payment_status)
+            .service(medical_record::create_medical_record),
+    )
+    .service(
+        web::scope("/api/doctor")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(doctor::get_self_doctor),
+    )
+    .service(
         web::scope("/api")
             .service(authentication::login)
             .service(authentication::register)
-            .service(authentication::reset_password),
+            .service(authentication::reset_password)
+            .service(authentication::get_role),
     );
 }
 

@@ -8,3 +8,4 @@ pub mod authentication;
 pub mod specialty;
 pub mod medicine;
 pub mod service;
+pub mod medical_record;
