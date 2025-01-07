@@ -101,8 +101,14 @@ pub async fn register(
     data: web::Data<crate::AppState>,
     register_req: web::Json<RegisterRequest>,
 ) -> HttpResponse {
-    let pool = &data.db;
+    if register_req.role != "patient" {
+        return HttpResponse::BadRequest().json(json!({
+            "success": false,
+            "message": "Only patient is supported for registration"
+        }));
+    }
 
+    let pool = &data.db;
     // Hash the password
     let hashed_password = match hash(&register_req.password, DEFAULT_COST) {
         Ok(hashed) => hashed,
@@ -226,4 +232,3 @@ pub async fn reset_password(
         })),
     }
 }
-

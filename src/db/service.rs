@@ -1,5 +1,5 @@
-use crate::models::{Service, ServiceCreateForm};
 use crate::error::Error;
+use crate::models::{Service, ServiceCreateForm};
 use sqlx::PgPool;
 
 pub async fn get_services(pool: &PgPool) -> Result<Vec<Service>, Error> {
@@ -38,7 +38,11 @@ pub async fn create_service(pool: &PgPool, service: &ServiceCreateForm) -> Resul
     Ok(result.id)
 }
 
-pub async fn update_service(pool: &PgPool, id: i32, service: &ServiceCreateForm) -> Result<(), Error> {
+pub async fn update_service(
+    pool: &PgPool,
+    id: i32,
+    service: &ServiceCreateForm,
+) -> Result<(), Error> {
     sqlx::query!(
         "UPDATE tn_services SET name = $1, price = $2, description = $3, image = $4 WHERE id = $5",
         service.name,

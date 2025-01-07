@@ -1,5 +1,5 @@
-use crate::error::Error;
 use crate::models::Appointment;
+use crate::{error::Error, models::AppointmentHistoryResponse};
 use chrono::{Duration, NaiveDate, NaiveTime};
 use sqlx::PgPool;
 
@@ -11,7 +11,7 @@ pub async fn get_appointments_of_patient(
     // println!("Fetching appointments for patient ID: {}", patient_id);
     let query = "SELECT * FROM tn_appointments WHERE patient_id = $1 ORDER BY date DESC";
     sqlx::query_as::<_, Appointment>(&query)
-        .bind(patient_id) 
+        .bind(patient_id)
         .fetch_all(pool)
         .await
         .map_err(Error::Database)
@@ -116,3 +116,29 @@ pub async fn calculate_appointment_time(
     Ok((numerical_order, appointment_time))
 }
 
+pub async fn get_appointment_history(
+    pool: &PgPool,
+    patient_id: i32,
+) -> Result<Vec<AppointmentHistoryResponse>, Error> {
+    let query = "SELECT 
+    a.id,                              
+    mr.id as medical_record_id,        
+    a.appointment_time, 
+	a.date,
+    a.numerical_order,                 
+    a.status,                         
+    mr.diagnosis,                     
+    COALESCE(d.name, '') as doctor_name,      
+    COALESCE(s.name, '') as speciality_name        
+    FROM tn_appointments a
+    LEFT JOIN tn_medical_records mr ON a.id = mr.appointment_id
+    LEFT JOIN tn_doctors d ON mr.doctor_id = d.id
+    LEFT JOIN tn_specialities s ON a.speciality_id = s.id
+    WHERE a.patient_id = $1";
+
+    sqlx::query_as::<_, AppointmentHistoryResponse>(&query)
+        .bind(patient_id)
+        .fetch_all(pool)
+        .await
+        .map_err(Error::Database)
+}

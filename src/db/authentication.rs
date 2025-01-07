@@ -9,6 +9,7 @@ pub async fn get_user_credentials(
     let is_doctor = login_req.login_type == "doctor";
     let is_receptionist = login_req.login_type == "receptionist";
     let is_staff = login_req.login_type == "staff";
+    let is_admin = login_req.login_type == "admin";
 
     let query = if is_patient {
         "SELECT id, password, name FROM tn_patients WHERE email = $1"
@@ -18,6 +19,8 @@ pub async fn get_user_credentials(
         "SELECT id, password, name FROM tn_receptionist WHERE email = $1"
     } else if is_staff {
         "SELECT id, password, name FROM tn_staffs WHERE email = $1"
+    } else if is_admin {
+        "SELECT id, password, name FROM tn_admins WHERE email = $1"
     } else {
         return Err(sqlx::Error::RowNotFound);
     };
@@ -62,7 +65,6 @@ pub async fn create_user(
         .bind(name)
         .execute(pool)
         .await?;
-
     Ok(())
 }
 

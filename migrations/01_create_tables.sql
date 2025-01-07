@@ -185,19 +185,20 @@ create table medicine_of_prescription
 	FOREIGN KEY (medicine_id) REFERENCES tn_medicine(id)
 );
 
--- create table tn_admins
--- (
--- 	id serial primary key,
--- 	email varchar(255) unique,
--- 	phone varchar(15),
--- 	password varchar(255),
--- 	name varchar(50),
--- 	role varchar(10),
--- 	active int,
--- 	avatar varchar(255),
--- 	create_at timestamp,
--- 	update_at timestamp
--- );
+create table tn_admins
+(
+	id serial primary key,
+	email varchar(255) unique,
+	phone varchar(15),
+	password varchar(255),
+	name varchar(50),
+	gender int,
+	birthday varchar(10),
+	address varchar(255),
+	avatar varchar(255),
+	create_at timestamp,
+	update_at timestamp
+);
 
 
 -- Add column price to table tn_services

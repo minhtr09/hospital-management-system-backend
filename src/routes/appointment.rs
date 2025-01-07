@@ -134,3 +134,24 @@ pub async fn get_appointments_by_speciality(
         })),
     }
 }
+
+#[get("/history/self")]
+pub async fn get_self_appointments(
+    data: web::Data<crate::AppState>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    let patient_id = claims.sub.parse::<i32>().unwrap();
+    println!("patient_id: {:?}", patient_id);
+
+    match appointment::get_appointment_history(&data.db, patient_id).await {
+        Ok(appointments) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Appointments fetched successfully",
+            "data": appointments
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to fetch appointments: {}", e)
+        })),
+    }
+}
