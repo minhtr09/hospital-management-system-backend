@@ -1,6 +1,8 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
-use crate::models::{Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest};
+use crate::models::{
+    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest,
+};
 use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
 use serde_json::json;
@@ -127,19 +129,20 @@ pub async fn get_appointments_by_specialty(
                 INNER JOIN tn_doctors d ON d.speciality_id = a.speciality_id 
                 WHERE d.speciality_id = $1
                 ORDER BY a.create_at";
-                
+
     let appointments = match sqlx::query_as::<_, Appointment>(query)
         .bind(specialty_id)
         .fetch_all(&data.db)
-        .await {
-            Ok(appointments) => appointments,
-            Err(e) => {
-                return HttpResponse::InternalServerError().json(json!({
-                    "success": false,
-                    "message": format!("Failed to fetch appointments: {}", e)
-                }));
-            }
-        };
+        .await
+    {
+        Ok(appointments) => appointments,
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": format!("Failed to fetch appointments: {}", e)
+            }));
+        }
+    };
 
     HttpResponse::Ok().json(json!({
         "success": true,
@@ -173,7 +176,7 @@ pub async fn update_appointment_status(
         Err(e) => HttpResponse::InternalServerError().json(json!({
             "success": false,
             "message": format!("Failed to update status: {}", e)
-        }))
+        })),
     }
 }
 

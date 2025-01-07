@@ -38,12 +38,14 @@ pub async fn get_user_credentials(
         );
     }
 
-    Ok(row.map(|row| (
-        row.get("id"),
-        row.get("password"),
-        row.get("name"),
-        row.get("speciality_id")
-    )))
+    Ok(row.map(|row| {
+        (
+            row.get("id"),
+            row.get("password"),
+            row.get("name"),
+            row.get("speciality_id"),
+        )
+    }))
 }
 
 pub async fn create_user(
@@ -61,6 +63,8 @@ pub async fn create_user(
         "INSERT INTO tn_patients (email, password, name) VALUES ($1, $2, $3)"
     } else if role == "staff" {
         "INSERT INTO tn_staffs (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "admin" {
+        "INSERT INTO tn_admins (email, password, name) VALUES ($1, $2, $3)"
     } else {
         return Err(sqlx::Error::RowNotFound);
     };
