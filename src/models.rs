@@ -37,31 +37,35 @@ pub struct Speciality {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Doctor {
     pub id: i32,
-    pub email: String,
+    pub email: Option<String>,
     pub phone: Option<String>,
-    pub password: String,
-    pub name: String,
+    pub password: Option<String>,
+    pub name: Option<String>,
     pub description: Option<String>,
     pub role: Option<String>,
     pub active: Option<i32>,
+    pub price: Option<i32>,
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
-    pub speciality_id: i32,
+    pub speciality_id: Option<i32>,
     pub room_id: Option<i32>,
     pub recovery_token: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct DoctorResponse {
+    pub id: i32,
     pub email: Option<String>,
     pub phone: Option<String>,
+    pub password: Option<String>,
     pub name: Option<String>,
-    pub description: Option<String>,
-    pub role: Option<String>,
+    pub gender: Option<i32>,
+    pub birthday: Option<String>,
+    pub address: Option<String>,
     pub avatar: Option<String>,
-    pub speciality_id: Option<i32>,
-    pub room_id: Option<i32>,
+    pub create_at: Option<NaiveDateTime>,
+    pub update_at: Option<NaiveDateTime>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -216,12 +220,9 @@ pub struct AppointmentResponse {
 pub struct AppointmentHistoryResponse {
     pub id: i32,
     pub appointment_time: Option<String>,
-    pub medical_record_id: Option<i32>,
     pub date: Option<NaiveDate>,
     pub numerical_order: Option<i32>,
     pub status: Option<String>,
-    pub diagnosis: Option<String>,
-    pub doctor_name: Option<String>,
     pub speciality_name: Option<String>,
 }
 
@@ -273,6 +274,16 @@ pub struct UpdatePatientForm {
     pub email: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct MedicalRecordResponse {
+    pub id: i32,
+    pub appointment_id: Option<i32>,
+    pub payment_status: Option<i32>,
+    pub date: Option<NaiveDate>,
+    pub patient_id: Option<i32>,
+    pub doctor_name: Option<String>,
+    pub diagnosis: Option<String>,
+}
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicalRecord {
     pub id: i32,

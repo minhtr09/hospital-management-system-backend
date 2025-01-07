@@ -59,7 +59,7 @@ pub async fn create_appointment(
         speciality_id: Some(appointment_form.speciality_id),
         numerical_order: Some(numerical_order as i32),
         appointment_time: appointment_time.format("%H:%M").to_string(),
-        status: Some("Scheduled".to_string()),
+        status: Some("Unpaid".to_string()),
         create_at: Some(Utc::now().naive_utc()),
         update_at: Some(Utc::now().naive_utc()),
         date: appointment_form.date,
@@ -141,7 +141,7 @@ pub async fn get_self_appointments(
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
     let patient_id = claims.sub.parse::<i32>().unwrap();
-    println!("patient_id: {:?}", patient_id);
+    println!("patient_id at get_self_appointments: {:?}", patient_id);
 
     match appointment::get_appointment_history(&data.db, patient_id).await {
         Ok(appointments) => HttpResponse::Ok().json(json!({

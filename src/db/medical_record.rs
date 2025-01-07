@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::models::MedicalRecord;
+use crate::models::{MedicalRecord, MedicalRecordResponse};
 use sqlx::PgPool;
 
 enum PaymentStatus {
@@ -27,11 +27,15 @@ pub async fn create(pool: &PgPool, record: &MedicalRecord) -> Result<i32, Error>
 pub async fn get_by_patient_id(
     pool: &PgPool,
     patient_id: i32,
-) -> Result<Vec<MedicalRecord>, Error> {
+) -> Result<Vec<MedicalRecordResponse>, Error> {
     sqlx::query_as!(
-        MedicalRecord,
-        "SELECT id, appointment_id, payment_status, patient_id, doctor_id, diagnosis 
-         FROM tn_medical_records WHERE patient_id = $1",
+        MedicalRecordResponse,
+        "SELECT mr.id, mr.appointment_id, mr.payment_status, mr.patient_id, 
+        mr.diagnosis, d.name as doctor_name, a.date
+        FROM tn_medical_records mr
+        JOIN tn_doctors d ON mr.doctor_id = d.id
+        JOIN tn_appointments a ON mr.appointment_id = a.id
+        WHERE mr.patient_id = $1",
         patient_id
     )
     .fetch_all(pool)

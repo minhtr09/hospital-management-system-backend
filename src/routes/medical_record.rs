@@ -13,12 +13,12 @@ pub async fn create_medical_record(
     claims: web::ReqData<Claims>,
     update_req: web::Json<MedicalRecord>,
 ) -> impl Responder {
-    // if claims.role != "doctor" {
-    //     return HttpResponse::Forbidden().json(json!({
-    //         "success": false,
-    //         "message": "Only doctor can create medical record"
-    //     }));
-    // }
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Only doctor can create medical record"
+        }));
+    }
 
     match medical_record::create(&data.db, &update_req.into_inner()).await {
         Ok(medical_record_id) => HttpResponse::Ok().json(json!({
@@ -39,7 +39,7 @@ pub async fn get_self_medical_records(
     claims: web::ReqData<Claims>,
 ) -> impl Responder {
     let patient_id = claims.sub.parse::<i32>().unwrap();
-    println!("patient_id: {}", patient_id);
+    println!("patient_id at get_self_medical_records: {}", patient_id);
 
     match medical_record::get_by_patient_id(&data.db, patient_id).await {
         Ok(records) => HttpResponse::Ok().json(json!({
