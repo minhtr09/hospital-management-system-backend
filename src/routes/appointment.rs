@@ -1,6 +1,8 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
-use crate::models::{Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest};
+use crate::models::{
+    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest,
+};
 use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
 use serde_json::json;
@@ -127,19 +129,20 @@ pub async fn get_appointments_by_specialty(
                 INNER JOIN tn_doctors d ON d.speciality_id = a.speciality_id 
                 WHERE d.speciality_id = $1
                 ORDER BY a.create_at";
-                
+
     let appointments = match sqlx::query_as::<_, Appointment>(query)
         .bind(specialty_id)
         .fetch_all(&data.db)
-        .await {
-            Ok(appointments) => appointments,
-            Err(e) => {
-                return HttpResponse::InternalServerError().json(json!({
-                    "success": false,
-                    "message": format!("Failed to fetch appointments: {}", e)
-                }));
-            }
-        };
+        .await
+    {
+        Ok(appointments) => appointments,
+        Err(e) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": format!("Failed to fetch appointments: {}", e)
+            }));
+        }
+    };
 
     HttpResponse::Ok().json(json!({
         "success": true,
@@ -148,11 +151,10 @@ pub async fn get_appointments_by_specialty(
     }))
 }
 
-#[put("/{id}/status")]
+#[put("/status/{id}")]
 pub async fn update_appointment_status(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
-    body: web::Json<UpdateStatusRequest>,
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
     if claims.role != "doctor" {
@@ -163,9 +165,9 @@ pub async fn update_appointment_status(
     }
 
     let appointment_id = path.into_inner();
-    let new_status = body.into_inner().status;
 
-    match appointment::update_appointment_status(&data.db, appointment_id, new_status).await {
+    match appointment::update_appointment_status(&data.db, appointment_id, "Paid".to_string()).await
+    {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Status updated successfully"
@@ -173,7 +175,7 @@ pub async fn update_appointment_status(
         Err(e) => HttpResponse::InternalServerError().json(json!({
             "success": false,
             "message": format!("Failed to update status: {}", e)
-        }))
+        })),
     }
 }
 
