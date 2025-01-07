@@ -5,7 +5,8 @@ use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
 use routes::{
-    appointment, authentication, medical_record, medicine, patient, payment, service, specialty,
+    appointment, authentication, doctor, medical_record, medicine, patient, payment, service,
+    specialty,
 };
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -82,10 +83,16 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(medical_record::create_medical_record),
     )
     .service(
+        web::scope("/api/doctor")
+            .wrap(AuthMiddleware::new(jwt_secret.clone()))
+            .service(doctor::get_self_doctor),
+    )
+    .service(
         web::scope("/api")
             .service(authentication::login)
             .service(authentication::register)
-            .service(authentication::reset_password),
+            .service(authentication::reset_password)
+            .service(authentication::get_role),
     );
 }
 
