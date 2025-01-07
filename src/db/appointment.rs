@@ -115,4 +115,3 @@ pub async fn calculate_appointment_time(
 
     Ok((numerical_order, appointment_time))
 }
-

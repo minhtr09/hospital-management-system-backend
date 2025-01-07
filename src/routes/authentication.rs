@@ -38,24 +38,25 @@ pub async fn login(
     println!("login request: {:?}", login_req);
 
     // Query the database using the authentication module
-    let credentials: (i32, String, String) =
-        match authentication::get_user_credentials(pool, &login_req).await {
-            Ok(Some(creds)) => creds,
-            Ok(None) => {
-                return HttpResponse::Unauthorized().json(LoginResponse {
-                    success: false,
-                    message: "Wrong email or password".to_string(),
-                    data: None,
-                });
-            }
-            Err(_) => {
-                return HttpResponse::InternalServerError().json(LoginResponse {
-                    success: false,
-                    message: "Database error".to_string(),
-                    data: None,
-                });
-            }
-        };
+    let credentials: (i32, String, String) = match authentication::get_user_credentials(pool, &login_req).await {
+        Ok(Some(creds)) => creds,
+        Ok(None) => {
+            return Ok(HttpResponse::Unauthorized().json(LoginResponse {
+                success: false,
+                message: "Invalid credentials".to_string(),
+                data: None,
+                user: None,  
+            }));
+        }
+        Err(_) => {
+            return Ok(HttpResponse::InternalServerError().json(LoginResponse {
+                success: false,
+                message: "Database error".to_string(),
+                data: None,
+                user: None,  
+            }));
+        }
+    };
 
     // Check if user exists
     let (id, hashed_password, name) = credentials;
