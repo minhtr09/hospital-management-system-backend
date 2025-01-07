@@ -157,12 +157,12 @@ pub async fn update_appointment_status(
     path: web::Path<i32>,
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
-    if claims.role != "doctor" {
-        return HttpResponse::Forbidden().json(json!({
-            "success": false,
-            "message": "Doctor access required"
-        }));
-    }
+    // if claims.role != "doctor" {
+    //     return HttpResponse::Forbidden().json(json!({
+    //         "success": false,
+    //         "message": "Doctor access required"
+    //     }));
+    // }
 
     let appointment_id = path.into_inner();
 
