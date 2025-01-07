@@ -1,13 +1,9 @@
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
-use actix_web::web::service;
 use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
-use routes::{
-    appointment, authentication, doctor, medical_record, medicine, patient, payment, service,
-    specialty,
-};
+use routers::{appointment, authentication, patient, payment, specialty};
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
 use std::net::SocketAddr;
@@ -17,7 +13,7 @@ mod db;
 mod error;
 mod middleware;
 mod models;
-mod routes;
+mod routers;
 
 pub struct AppState {
     db: PgPool,
@@ -28,21 +24,17 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
     cfg.service(
         web::scope("/api/patient")
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
-            .service(patient::get_self_patient)
             .service(patient::get_patients)
             .service(patient::get_patient_by_id)
             .service(patient::update_patient)
             .service(patient::get_patient_by_phone)
-            .service(patient::create_patient)
-            .service(patient::get_patient_id_by_email),
+            .service(patient::create_patient),
     )
     .service(
         web::scope("/api/appointment")
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(appointment::create_appointment)
             .service(appointment::get_appointments_of_patient)
-            .service(appointment::get_appointments_by_speciality)
-            .service(appointment::get_self_appointments),
     )
     .service(
         web::scope("/api/payment")
@@ -60,39 +52,10 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(specialty::delete_specialty),
     )
     .service(
-        web::scope("/api/service")
-            .wrap(AuthMiddleware::new(jwt_secret.clone()))
-            .service(service::get_services)
-            .service(service::get_service_by_id)
-            .service(service::create_service)
-            .service(service::update_service),
-    )
-    .service(
-        web::scope("/api/medicine")
-            .wrap(AuthMiddleware::new(jwt_secret.clone()))
-            .service(medicine::get_medicines)
-            .service(medicine::get_medicine_by_id)
-            .service(medicine::create_medicine)
-            .service(medicine::delete_medicine),
-    )
-    .service(
-        web::scope("/api/medical-record")
-            .wrap(AuthMiddleware::new(jwt_secret.clone()))
-            .service(medical_record::get_self_medical_records)
-            .service(medical_record::update_payment_status)
-            .service(medical_record::create_medical_record),
-    )
-    .service(
-        web::scope("/api/doctor")
-            .wrap(AuthMiddleware::new(jwt_secret.clone()))
-            .service(doctor::get_self_doctor),
-    )
-    .service(
         web::scope("/api")
             .service(authentication::login)
             .service(authentication::register)
-            .service(authentication::reset_password)
-            .service(authentication::get_role),
+            .service(authentication::reset_password),
     );
 }
 

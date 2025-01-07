@@ -107,8 +107,7 @@ create table tn_services
 	id serial primary key,
     name varchar(255),
 	image varchar(255),
-	description TEXT,
-	price int,
+	description TEXT
 );
 
 create table tn_doctor_and_service
@@ -184,25 +183,6 @@ create table medicine_of_prescription
 	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id),
 	FOREIGN KEY (medicine_id) REFERENCES tn_medicine(id)
 );
-
-create table tn_admins
-(
-	id serial primary key,
-	email varchar(255) unique,
-	phone varchar(15),
-	password varchar(255),
-	name varchar(50),
-	gender int,
-	birthday varchar(10),
-	address varchar(255),
-	avatar varchar(255),
-	create_at timestamp,
-	update_at timestamp
-);
-
-
--- Add column price to table tn_services
-ALTER TABLE tn_services ADD COLUMN price INTEGER;
 
 
 
