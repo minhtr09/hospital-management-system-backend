@@ -6,3 +6,5 @@ pub mod payment;
 pub mod staff;
 pub mod authentication;
 pub mod specialty;
+pub mod medicine;
+pub mod service;

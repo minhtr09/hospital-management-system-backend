@@ -1,6 +1,6 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
-use crate::models::{Appointment, AppointmentCreateForm, Patient, UpdateStatusRequest};
+use crate::models::{Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest};
 use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
 use serde_json::json;
@@ -55,7 +55,11 @@ pub async fn create_appointment(
     match appointment::create_appointment(pool, appointment).await {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
-            "message": "Appointment created successfully"
+            "message": "Appointment created successfully",
+            "data": AppointmentResponse {
+                appointment_time: appointment_time.format("%H:%M").to_string(),
+                numerical_order: numerical_order as i32
+            }
         })),
         Err(e) => HttpResponse::InternalServerError().json(json!({
             "success": false,

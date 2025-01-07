@@ -3,12 +3,15 @@ use crate::models::Appointment;
 use chrono::{Duration, NaiveDate, NaiveTime};
 use sqlx::PgPool;
 
+#[allow(unused_variables)]
 pub async fn get_appointments_of_patient(
     pool: &PgPool,
     patient_id: i32,
 ) -> Result<Vec<Appointment>, Error> {
-    let query = "SELECT * FROM tn_appointments WHERE patient_id = $1";
+    // println!("Fetching appointments for patient ID: {}", patient_id);
+    let query = "SELECT * FROM tn_appointments WHERE patient_id = $1 ORDER BY date DESC";
     sqlx::query_as::<_, Appointment>(&query)
+        .bind(patient_id) 
         .fetch_all(pool)
         .await
         .map_err(Error::Database)
@@ -44,6 +47,18 @@ pub async fn create_appointment(pool: &PgPool, appointment: Appointment) -> Resu
         .await
         .map_err(Error::Database)?;
     Ok(())
+}
+
+pub async fn get_appointments_by_speciality(
+    pool: &PgPool,
+    speciality_id: i32,
+) -> Result<Vec<Appointment>, Error> {
+    let query = "SELECT * FROM tn_appointments WHERE speciality_id = $1 ORDER BY date DESC";
+    sqlx::query_as::<_, Appointment>(&query)
+        .bind(speciality_id)
+        .fetch_all(pool)
+        .await
+        .map_err(Error::Database)
 }
 
 pub async fn update_appointment_status(

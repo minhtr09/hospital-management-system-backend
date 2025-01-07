@@ -5,9 +5,18 @@ use sqlx::FromRow;
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Service {
     pub id: i32,
-    pub name: String,
+    pub name: Option<String>,
     pub image: Option<String>,
     pub description: Option<String>,
+    pub price: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ServiceCreateForm {
+    pub name: Option<String>,
+    pub price:  Option<i32>,
+    pub description: Option<String>,
+    pub image: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -183,7 +192,7 @@ pub struct Drug {
     pub name: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct LoginRequest {
     pub login_type: String,
     pub email: String,
@@ -205,6 +214,12 @@ pub struct LoginResponse {
     pub data: Option<TokenData>,
     pub user: Option<UserData>,  // Thêm trường user
 
+}
+
+#[derive(Serialize)]
+pub struct AppointmentResponse {
+    pub appointment_time: String,
+    pub numerical_order: i32,
 }
 
 #[derive(Serialize)]
@@ -252,6 +267,7 @@ pub struct UpdatePatientForm {
     pub birthday: Option<String>,
     pub gender: Option<i32>,
     pub address: Option<String>,
+    pub email: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -272,17 +288,31 @@ pub struct Invoice {
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
+
 pub struct Medicine {
     pub id: i32,
-    pub name: String,
-    pub price: Option<i32>,
-    pub unit: Option<String>,
-    pub description: Option<String>,
-    pub manufacture_date: Option<NaiveDateTime>,
-    pub expiry_date: Option<NaiveDateTime>,
-    pub side_effects: Option<String>,
-    pub dosage: Option<String>,
+    pub name: Option<String>,              
+    pub price: Option<i32>,              
+    pub unit: Option<String>,           
+    pub description: Option<String>,       
+    pub manufacture_date: Option<NaiveDateTime>,  
+    pub expiry_date: Option<NaiveDateTime>,       
+    pub side_effects: Option<String>,    
+    pub dosage: Option<String>,     
 }
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MedicineCreateForm {
+    pub name: Option<String>,              
+    pub price: Option<i32>,              
+    pub unit: Option<String>,           
+    pub description: Option<String>,       
+    pub manufacture_date: Option<NaiveDateTime>,  
+    pub expiry_date: Option<NaiveDateTime>,       
+    pub side_effects: Option<String>,    
+    pub dosage: Option<String>,     
+}
+
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicineOfPrescription {
