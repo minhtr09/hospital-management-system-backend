@@ -151,11 +151,10 @@ pub async fn get_appointments_by_specialty(
     }))
 }
 
-#[put("/{id}/status")]
+#[put("/status/{id}")]
 pub async fn update_appointment_status(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
-    body: web::Json<UpdateStatusRequest>,
     claims: web::ReqData<Claims>,
 ) -> HttpResponse {
     if claims.role != "doctor" {
@@ -166,9 +165,9 @@ pub async fn update_appointment_status(
     }
 
     let appointment_id = path.into_inner();
-    let new_status = body.into_inner().status;
 
-    match appointment::update_appointment_status(&data.db, appointment_id, new_status).await {
+    match appointment::update_appointment_status(&data.db, appointment_id, "Paid".to_string()).await
+    {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Status updated successfully"
