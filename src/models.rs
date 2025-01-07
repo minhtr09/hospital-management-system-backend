@@ -139,6 +139,7 @@ pub struct Treatment {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Appointment {
+    pub id: Option<i32>,  // Đổi thành Option vì khi tạo mới sẽ chưa có id
     pub patient_id: i32,
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,

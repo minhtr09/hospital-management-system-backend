@@ -51,6 +51,7 @@ pub async fn create_appointment(
     println!("numerical_order: {:?}", Some(numerical_order as i32));
 
     let appointment = Appointment {
+        id: None,
         patient_id: appointment_form.patient_id,
         patient_name: Some(appointment_form.patient_name),
         patient_birthday: Some(appointment_form.patient_birthday),
