@@ -2,7 +2,7 @@ use std::ptr::null;
 
 use crate::db::{authentication, doctor, patient};
 use crate::models::{
-    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData,
+    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData, UserData
 };
 use actix_web::{get, post, web, HttpResponse};
 use bcrypt::{hash, DEFAULT_COST};
@@ -37,7 +37,7 @@ pub async fn login(
     println!("login request: {:?}", login_req);
 
     // Query the database using the authentication module
-    let credentials: (i32, String, String) =
+    let credentials: (i32, String, String, Option<i32>) =
         match authentication::get_user_credentials(pool, &login_req).await {
             Ok(Some(creds)) => creds,
             Ok(None) => {
@@ -45,6 +45,7 @@ pub async fn login(
                     success: false,
                     message: "Wrong email or password".to_string(),
                     data: None,
+                    user_data: None,
                 });
             }
             Err(_) => {
@@ -52,12 +53,13 @@ pub async fn login(
                     success: false,
                     message: "Database error".to_string(),
                     data: None,
+                    user_data: None,
                 });
             }
         };
 
     // Check if user exists
-    let (id, hashed_password, name) = credentials;
+    let (id, hashed_password, name, speciality_id) = credentials;
 
     // Verify password
     if !verify_password(&login_req.password, &hashed_password) {
@@ -65,13 +67,14 @@ pub async fn login(
             success: false,
             message: "Invalid credentials".to_string(),
             data: None,
+            user_data: None,
         });
     }
 
     // Generate JWT token
     let claims = Claims {
         sub: id.to_string(),
-        name,
+        name: name.clone(),
         role: login_req.login_type.clone(),
         exp: (Utc::now() + Duration::hours(24)).timestamp(),
     };
@@ -92,6 +95,12 @@ pub async fn login(
             access_token: token,
             token_type: "Bearer".to_string(),
             expires_in: 86400, // 24 hours in seconds
+        }),
+        user_data: Some(UserData {
+            id,
+            name,
+            role: login_req.login_type.clone(),
+            speciality_id,
         }),
     })
 }
@@ -117,6 +126,7 @@ pub async fn register(
                 success: false,
                 message: "Password hashing failed".to_string(),
                 data: None,
+                user_data: None,
             });
         }
     };
@@ -135,6 +145,7 @@ pub async fn register(
             success: true,
             message: "User registered successfully".to_string(),
             data: None,
+            user_data: None,
         }),
         Err(e) => {
             // You might want to handle different error types differently
@@ -142,6 +153,7 @@ pub async fn register(
                 success: false,
                 message: format!("Registration failed: {}", e),
                 data: None,
+                user_data: None,
             })
         }
     }
@@ -186,7 +198,7 @@ pub async fn reset_password(
 
     // Update password in database
     match authentication::update_password(pool, &reset_req.role, &reset_req.email, &hashed_password)
-        .await
+        .await 
     {
         Ok(true) => {
             // Send email with new password

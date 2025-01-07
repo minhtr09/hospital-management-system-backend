@@ -5,8 +5,7 @@ use actix_web::{web, App, HttpServer};
 use dotenv::dotenv;
 use middleware::auth::AuthMiddleware;
 use routes::{
-    appointment, authentication, doctor, medical_record, medicine, patient, payment, service,
-    specialty,
+    appointment, authentication, doctor, medical_record, medicine, patient, payment, service, specialty
 };
 use serde::ser;
 use sqlx::{postgres::PgPoolOptions, PgPool};
@@ -41,14 +40,16 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(appointment::create_appointment)
             .service(appointment::get_appointments_of_patient)
-            .service(appointment::get_appointments_by_speciality)
+            .service(appointment::get_appointments_by_specialty)
+            .service(appointment::update_appointment_status)
             .service(appointment::get_self_appointments),
     )
     .service(
         web::scope("/api/payment")
             .wrap(AuthMiddleware::new(jwt_secret.clone()))
             .service(payment::get_invoices_of_medical_record)
-            .service(payment::create_invoice),
+            .service(payment::create_invoice)
+            .service(payment::get_self_invoices),
     )
     .service(
         web::scope("/api/specialty")

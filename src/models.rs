@@ -139,6 +139,7 @@ pub struct Treatment {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Appointment {
+    pub id: Option<i32>,  // Đổi thành Option vì khi tạo mới sẽ chưa có id
     pub patient_id: i32,
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,
@@ -205,6 +206,7 @@ pub struct LoginRequest {
 pub struct LoginResponse {
     pub success: bool,
     pub message: String,
+    pub user_data: Option<UserData>, // Add user data to response
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<TokenData>,
 }
@@ -295,13 +297,14 @@ pub struct MedicalRecord {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Invoice {
+    pub id: i32,
     pub medical_record_id: Option<i32>,
     pub time: Option<NaiveDateTime>,
     pub total_price: Option<i32>,
+    pub service_ids: Option<Vec<i32>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-
 pub struct Medicine {
     pub id: i32,
     pub name: Option<String>,
@@ -332,4 +335,26 @@ pub struct MedicineOfPrescription {
     pub medical_record_id: i32,
     pub medicine_id: i32,
     pub quantity: Option<i32>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateStatusRequest {
+    pub status: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserData {
+    pub id: i32,
+    pub name: String,
+    pub role: String,
+    pub speciality_id: Option<i32>, // Optional since only doctors have this
+}
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct InvoiceResponse {
+    pub id: i32,
+    pub medical_record_id: Option<i32>,
+    pub time: Option<NaiveDateTime>,
+    pub total_price: Option<i32>,
+    pub service_names: Option<Vec<String>>,
+    pub service_prices: Option<Vec<i32>>,
 }

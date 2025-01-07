@@ -200,9 +200,10 @@ create table tn_admins
 	update_at timestamp
 );
 
-
 -- Add column price to table tn_services
 ALTER TABLE tn_services ADD COLUMN price INTEGER;
+
+ALTER TABLE tn_invoices ADD COLUMN service_ids integer[];
 
 
 

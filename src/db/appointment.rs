@@ -120,7 +120,7 @@ pub async fn get_appointment_history(
     pool: &PgPool,
     patient_id: i32,
 ) -> Result<Vec<AppointmentHistoryResponse>, Error> {
-    let query = "	SELECT 
+    let query = "SELECT 
     a.id,                               
     a.appointment_time, 
 	a.date,
