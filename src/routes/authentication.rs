@@ -198,7 +198,7 @@ pub async fn reset_password(
 
     // Update password in database
     match authentication::update_password(pool, &reset_req.role, &reset_req.email, &hashed_password)
-        .await
+        .await 
     {
         Ok(true) => {
             // Send email with new password
