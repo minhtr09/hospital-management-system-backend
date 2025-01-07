@@ -13,7 +13,7 @@ pub async fn get_user_credentials(
     let query = if is_patient {
         "SELECT id, password, name FROM tn_patients WHERE email = $1"
     } else if is_doctor {
-        "SELECT id, password, name FROM tn_doctors WHERE email = $1"
+        "SELECT id, password, name, speciality_id FROM tn_doctors WHERE email = $1"
     } else if is_receptionist {
         "SELECT id, password, name FROM tn_receptionist WHERE email = $1"
     } else if is_staff {

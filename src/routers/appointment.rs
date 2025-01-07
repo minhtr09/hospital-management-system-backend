@@ -1,18 +1,9 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
-use crate::models::{Appointment, AppointmentCreateForm, Patient};
-use actix_web::{get, post, web, HttpResponse};
+use crate::models::{Appointment, AppointmentCreateForm, Patient, UpdateStatusRequest};
+use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
 use serde_json::json;
-
-// #[get("/patient/{id}")]
-// pub async fn get_appointments_of_patient(
-//     data: web::Data<crate::AppState>,
-//     path: web::Path<i32>,
-//     claims: web::ReqData<Claims>,
-// ) -> HttpResponse {
-
-// }
 
 #[post("")]
 pub async fn create_appointment(
@@ -44,10 +35,8 @@ pub async fn create_appointment(
         }
     };
 
-    println!("appointment_time: {:?}", appointment_time.format("%H:%M").to_string());
-    println!("numerical_order: {:?}", Some(numerical_order as i32));
-
     let appointment = Appointment {
+        id: None,  // Không cần gán giá trị
         patient_id: appointment_form.patient_id,
         patient_name: Some(appointment_form.patient_name),
         patient_birthday: Some(appointment_form.patient_birthday),
@@ -61,6 +50,7 @@ pub async fn create_appointment(
         update_at: Some(Utc::now().naive_utc()),
         date: appointment_form.date,
     };
+    
     let pool = &data.db;
     match appointment::create_appointment(pool, appointment).await {
         Ok(_) => HttpResponse::Ok().json(json!({
@@ -98,5 +88,73 @@ pub async fn get_appointments_of_patient(
             "success": false,
             "message": format!("Failed to fetch appointments: {}", e)
         })),
+    }
+}
+
+#[get("/specialty/{specialityId}")]
+pub async fn get_appointments_by_specialty(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor access required"
+        }));
+    }
+
+    let specialty_id = path.into_inner();
+    let query = "SELECT DISTINCT a.* FROM tn_appointments a 
+                INNER JOIN tn_doctors d ON d.speciality_id = a.speciality_id 
+                WHERE d.speciality_id = $1
+                ORDER BY a.create_at";
+                
+    let appointments = match sqlx::query_as::<_, Appointment>(query)
+        .bind(specialty_id)
+        .fetch_all(&data.db)
+        .await {
+            Ok(appointments) => appointments,
+            Err(e) => {
+                return HttpResponse::InternalServerError().json(json!({
+                    "success": false,
+                    "message": format!("Failed to fetch appointments: {}", e)
+                }));
+            }
+        };
+
+    HttpResponse::Ok().json(json!({
+        "success": true,
+        "data": appointments,
+        "message": "Appointments fetched successfully"
+    }))
+}
+
+#[put("/{id}/status")]
+pub async fn update_appointment_status(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    body: web::Json<UpdateStatusRequest>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor access required"
+        }));
+    }
+
+    let appointment_id = path.into_inner();
+    let new_status = body.into_inner().status;
+
+    match appointment::update_appointment_status(&data.db, appointment_id, new_status).await {
+        Ok(_) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Status updated successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to update status: {}", e)
+        }))
     }
 }

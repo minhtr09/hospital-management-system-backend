@@ -127,6 +127,7 @@ pub struct Treatment {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Appointment {
+    pub id: Option<i32>,
     pub patient_id: i32,
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,
@@ -189,12 +190,21 @@ pub struct LoginRequest {
     pub password: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct UserData {
+    pub id: i32,
+    pub name: String,
+    pub speciality_id: Option<i32>,  // Optional vì chỉ bác sĩ mới có speciality_id
+}
+
 #[derive(Serialize)]
 pub struct LoginResponse {
     pub success: bool,
     pub message: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<TokenData>,
+    pub user: Option<UserData>,  // Thêm trường user
+
 }
 
 #[derive(Serialize)]
@@ -280,4 +290,9 @@ pub struct MedicineOfPrescription {
     pub medical_record_id: i32,
     pub medicine_id: i32,
     pub quantity: Option<i32>,
+}
+
+#[derive(Deserialize)]
+pub struct UpdateStatusRequest {
+    pub status: String,
 }

@@ -1,6 +1,6 @@
 use crate::db::authentication;
 use crate::models::{
-    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData,
+    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData, UserData,
 };
 use actix_web::{post, web, HttpResponse};
 use bcrypt::{hash, DEFAULT_COST};
@@ -12,6 +12,7 @@ use lettre::{Message, SmtpTransport, Transport};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
+use sqlx::Row; // Add this import
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
@@ -29,25 +30,27 @@ fn verify_password(password: &str, hash: &str) -> bool {
 pub async fn login(
     data: web::Data<crate::AppState>,
     login_req: web::Json<LoginRequest>,
-) -> HttpResponse {
+) -> Result<HttpResponse, actix_web::Error> {
     let pool = &data.db;
 
     // Query the database using the authentication module
     let credentials: (i32, String, String) = match authentication::get_user_credentials(pool, &login_req).await {
         Ok(Some(creds)) => creds,
         Ok(None) => {
-            return HttpResponse::Unauthorized().json(LoginResponse {
+            return Ok(HttpResponse::Unauthorized().json(LoginResponse {
                 success: false,
                 message: "Invalid credentials".to_string(),
                 data: None,
-            });
+                user: None,  
+            }));
         }
         Err(_) => {
-            return HttpResponse::InternalServerError().json(LoginResponse {
+            return Ok(HttpResponse::InternalServerError().json(LoginResponse {
                 success: false,
                 message: "Database error".to_string(),
                 data: None,
-            });
+                user: None,  
+            }));
         }
     };
 
@@ -56,17 +59,18 @@ pub async fn login(
 
     // Verify password
     if !verify_password(&login_req.password, &hashed_password) {
-        return HttpResponse::Unauthorized().json(LoginResponse {
+        return Ok(HttpResponse::Unauthorized().json(LoginResponse {
             success: false,
             message: "Invalid credentials".to_string(),
             data: None,
-        });
+            user: None,  
+        }));
     }
 
     // Generate JWT token
     let claims = Claims {
         sub: id.to_string(),
-        name,
+        name: name.clone(), // Thêm .clone() ở đây
         role: login_req.login_type.clone(),
         exp: (Utc::now() + Duration::hours(24)).timestamp(),
     };
@@ -80,7 +84,16 @@ pub async fn login(
     )
     .unwrap();
 
-    HttpResponse::Ok().json(LoginResponse {
+    let speciality_id = match sqlx::query("SELECT speciality_id FROM tn_doctors WHERE id = $1")
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+    {
+        Ok(row) => row.map(|r| r.get("speciality_id")),
+        Err(_) => None,
+    };
+
+    Ok(HttpResponse::Ok().json(LoginResponse {
         success: true,
         message: "Login successful".to_string(),
         data: Some(TokenData {
@@ -88,7 +101,12 @@ pub async fn login(
             token_type: "Bearer".to_string(),
             expires_in: 86400, // 24 hours in seconds
         }),
-    })
+        user: Some(UserData {
+            id,
+            name,  // Giờ có thể sử dụng name ở đây
+            speciality_id,
+        }),
+    }))
 }
 
 #[post("/register")]
@@ -106,6 +124,7 @@ pub async fn register(
                 success: false,
                 message: "Password hashing failed".to_string(),
                 data: None,
+                user: None,  
             });
         }
     };
@@ -124,6 +143,7 @@ pub async fn register(
             success: true,
             message: "User registered successfully".to_string(),
             data: None,
+            user: None,  
         }),
         Err(e) => {
             // You might want to handle different error types differently
@@ -131,6 +151,7 @@ pub async fn register(
                 success: false,
                 message: format!("Registration failed: {}", e),
                 data: None,
+                user: None,  
             })
         }
     }
