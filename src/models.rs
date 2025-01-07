@@ -44,7 +44,6 @@ pub struct Doctor {
     pub description: Option<String>,
     pub role: Option<String>,
     pub active: Option<i32>,
-    pub price: Option<i32>,
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
