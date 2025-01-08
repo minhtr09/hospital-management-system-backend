@@ -55,8 +55,8 @@ pub async fn create_user(
 ) -> Result<(), sqlx::Error> {
     let query = if role == "doctor" {
         "INSERT INTO tn_doctors (email, password, name) VALUES ($1, $2, $3)"
-    } else if role == "receptionist" {
-        "INSERT INTO tn_receptionist (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "admin" {
+        "INSERT INTO tn_admins (email, password, name) VALUES ($1, $2, $3)"
     } else if role == "patient" {
         "INSERT INTO tn_patients (email, password, name) VALUES ($1, $2, $3)"
     } else if role == "staff" {

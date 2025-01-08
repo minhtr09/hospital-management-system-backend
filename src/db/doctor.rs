@@ -72,3 +72,11 @@ pub async fn update_doctor(pool: &PgPool, email: String, doctor: &Doctor) -> Res
     .map_err(Error::Database)?;
     Ok(())
 }
+
+pub async fn delete_doctor(pool: &PgPool, id: &i32) -> Result<(), Error> {
+    sqlx::query!("DELETE FROM tn_doctors WHERE id = $1", id)
+        .execute(pool)
+        .await
+        .map_err(Error::Database)?;
+    Ok(())
+}
