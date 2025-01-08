@@ -43,6 +43,7 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(appointment::get_appointments_of_patient)
             .service(appointment::get_appointments_by_specialty)
             .service(appointment::update_appointment_status)
+            .service(appointment::update_appointment_treatment_status)
             .service(appointment::get_self_appointments),
     )
     .service(

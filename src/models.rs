@@ -149,6 +149,7 @@ pub struct Appointment {
     pub numerical_order: Option<i32>,
     pub appointment_time: String,
     pub status: Option<String>,
+    pub treatment_status: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
     pub date: Option<NaiveDate>,
@@ -338,8 +339,8 @@ pub struct MedicineOfPrescription {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateStatusRequest {
-    pub status: String,
+pub struct UpdateTreatmentStatusRequest  {
+    pub treatment_status: String,
 }
 
 #[derive(Debug, Serialize)]

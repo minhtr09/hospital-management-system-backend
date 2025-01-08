@@ -205,5 +205,8 @@ ALTER TABLE tn_services ADD COLUMN price INTEGER;
 
 ALTER TABLE tn_invoices ADD COLUMN service_ids integer[];
 
+ALTER TABLE tn_appointments ADD COLUMN treatment_status varchar(15);
+
+
 
 

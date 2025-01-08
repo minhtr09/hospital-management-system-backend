@@ -1,7 +1,7 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
 use crate::models::{
-    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest,
+    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateTreatmentStatusRequest,
 };
 use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
@@ -63,6 +63,7 @@ pub async fn create_appointment(
         numerical_order: Some(numerical_order as i32),
         appointment_time: appointment_time.format("%H:%M").to_string(),
         status: Some("Unpaid".to_string()),
+        treatment_status: Some("scheduled".to_string()),
         create_at: Some(Utc::now().naive_utc()),
         update_at: Some(Utc::now().naive_utc()),
         date: appointment_form.date,
@@ -179,6 +180,37 @@ pub async fn update_appointment_status(
     }
 }
 
+#[put("/treatment-status/{id}")]
+pub async fn update_appointment_treatment_status(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    body: web::Json<UpdateTreatmentStatusRequest>,
+    claims: web::ReqData<Claims>,
+) -> HttpResponse {
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Doctor access required"
+        }));
+    }
+
+    let appointment_id = path.into_inner();
+
+    match appointment::update_appointment_treatment_status(
+        &data.db,
+        appointment_id,
+        body.treatment_status.clone()
+    ).await {
+        Ok(_) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Treatment status updated successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to update treatment status: {}", e)
+        })),
+    }
+}
 #[get("/history/self")]
 pub async fn get_self_appointments(
     data: web::Data<crate::AppState>,
