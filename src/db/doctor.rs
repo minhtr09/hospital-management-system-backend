@@ -7,13 +7,20 @@ pub async fn get_doctors(
     search: Option<String>,
     order_column: Option<String>,
     order_dir: Option<String>,
-) -> Result<Vec<Doctor>, sqlx::Error> {
-    let mut query = "SELECT * FROM tn_doctors WHERE 1=1".to_string();
+) -> Result<Vec<DoctorResponse>, sqlx::Error> {
+    let mut query = "
+        SELECT 
+            d.*,
+            s.name as speciality
+        FROM tn_doctors d
+        LEFT JOIN tn_specialities s ON d.speciality_id = s.id 
+        WHERE 1=1"
+        .to_string();
 
     // Add search condition
     if let Some(search_term) = search {
         query.push_str(&format!(
-            " AND (name ILIKE '%{}%' OR email ILIKE '%{}%' OR phone ILIKE '%{}%' )",
+            " AND (d.name ILIKE '%{}%' OR d.email ILIKE '%{}%' OR d.phone ILIKE '%{}%')",
             search_term, search_term, search_term
         ));
     }
@@ -21,20 +28,29 @@ pub async fn get_doctors(
     // Add ordering
     let order_column = order_column.unwrap_or_else(|| "id".to_string());
     let order_dir = order_dir.unwrap_or_else(|| "asc".to_string());
-    query.push_str(&format!(" ORDER BY {} {}", order_column, order_dir));
+    query.push_str(&format!(" ORDER BY d.{} {}", order_column, order_dir));
 
-    let doctors = sqlx::query_as::<_, Doctor>(&query).fetch_all(pool).await?;
+    let doctors = sqlx::query_as::<_, DoctorResponse>(&query)
+        .fetch_all(pool)
+        .await?;
     Ok(doctors)
 }
 
-pub async fn get_doctor_by_id(pool: &PgPool, id: &i32) -> Result<Doctor, Error> {
-    sqlx::query_as!(Doctor, "SELECT * FROM tn_doctors WHERE id = $1", id)
-        .fetch_one(pool)
-        .await
-        .map_err(|e| match e {
-            sqlx::Error::RowNotFound => Error::NotFound,
-            _ => Error::Database(e),
-        })
+pub async fn get_doctor_by_id(pool: &PgPool, id: &i32) -> Result<DoctorResponse, Error> {
+    sqlx::query_as!(
+        DoctorResponse,
+        "SELECT d.*, s.name as speciality 
+         FROM tn_doctors d
+         LEFT JOIN tn_specialities s ON d.speciality_id = s.id 
+         WHERE d.id = $1",
+        id
+    )
+    .fetch_one(pool)
+    .await
+    .map_err(|e| match e {
+        sqlx::Error::RowNotFound => Error::NotFound,
+        _ => Error::Database(e),
+    })
 }
 
 pub async fn create_doctor(pool: &PgPool, doctor: &Doctor) -> Result<(), Error> {
@@ -78,5 +94,21 @@ pub async fn delete_doctor(pool: &PgPool, id: &i32) -> Result<(), Error> {
         .execute(pool)
         .await
         .map_err(Error::Database)?;
+    Ok(())
+}
+
+pub async fn update_doctor_speciality(
+    pool: &PgPool,
+    email: String,
+    speciality_id: &i32,
+) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE tn_doctors SET speciality_id = $1 WHERE email = $2",
+        speciality_id,
+        email
+    )
+    .execute(pool)
+    .await
+    .map_err(Error::Database)?;
     Ok(())
 }

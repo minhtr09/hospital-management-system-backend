@@ -1,7 +1,8 @@
 use crate::authentication::Claims;
 use crate::db::{appointment, patient};
 use crate::models::{
-    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateTreatmentStatusRequest,
+    Appointment, AppointmentCreateForm, AppointmentResponse, Patient, UpdateStatusRequest,
+    UpdateTreatmentStatusRequest,
 };
 use actix_web::{get, post, put, web, HttpResponse};
 use chrono::Utc;
@@ -157,6 +158,7 @@ pub async fn update_appointment_status(
     data: web::Data<crate::AppState>,
     path: web::Path<i32>,
     claims: web::ReqData<Claims>,
+    body: web::Json<UpdateStatusRequest>,
 ) -> HttpResponse {
     // if claims.role != "doctor" {
     //     return HttpResponse::Forbidden().json(json!({
@@ -164,11 +166,10 @@ pub async fn update_appointment_status(
     //         "message": "Doctor access required"
     //     }));
     // }
-
+    let new_status = body.into_inner().status;
     let appointment_id = path.into_inner();
 
-    match appointment::update_appointment_status(&data.db, appointment_id, "Paid".to_string()).await
-    {
+    match appointment::update_appointment_status(&data.db, appointment_id, new_status).await {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Status updated successfully"
@@ -199,8 +200,10 @@ pub async fn update_appointment_treatment_status(
     match appointment::update_appointment_treatment_status(
         &data.db,
         appointment_id,
-        body.treatment_status.clone()
-    ).await {
+        body.treatment_status.clone(),
+    )
+    .await
+    {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Treatment status updated successfully"

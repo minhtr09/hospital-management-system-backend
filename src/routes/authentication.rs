@@ -327,20 +327,38 @@ pub async fn admin_create_user(
     )
     .await
     {
-        Ok(_) => HttpResponse::Ok().json(LoginResponse {
-            success: true,
-            message: "User registered successfully".to_string(),
-            data: None,
-            user_data: None,
-        }),
-        Err(e) => {
-            // You might want to handle different error types differently
-            HttpResponse::BadRequest().json(LoginResponse {
-                success: false,
-                message: format!("Registration failed: {}", e),
-                data: None,
-                user_data: None,
-            })
+        Ok(_) => (),
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": "Failed to create user"
+            }));
         }
+    }
+
+    if register_req.role == "doctor" {
+        match doctor::update_doctor_speciality(
+            pool,
+            register_req.email.clone(),
+            &register_req.speciality_id.unwrap(),
+        )
+        .await
+        {
+            Ok(_) => HttpResponse::Ok().json(json!({
+                "success": true,
+                "message": "Doctor registered successfully"
+            })),
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                    "message": "Failed to update doctor speciality"
+                }));
+            }
+        }
+    } else {
+        HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "User registered successfully"
+        }))
     }
 }

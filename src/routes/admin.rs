@@ -16,7 +16,14 @@ pub struct DoctorQuery {
 pub async fn get_doctors(
     data: web::Data<crate::AppState>,
     query: web::Query<DoctorQuery>,
+    claims: web::ReqData<Claims>,
 ) -> HttpResponse {
+    if claims.role != "admin" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Admin access required"
+        }));
+    }
     match doctor::get_doctors(
         &data.db,
         query.search.clone(),
@@ -95,10 +102,7 @@ pub async fn update_doctor(
 
 // Xóa bác sĩ
 #[delete("/doctors/{id}")]
-pub async fn delete_doctor(
-    data: web::Data<crate::AppState>,
-    id: web::Path<i32>,
-) -> HttpResponse {
+pub async fn delete_doctor(data: web::Data<crate::AppState>, id: web::Path<i32>) -> HttpResponse {
     // Thêm hàm delete_doctor vào module db/doctor.rs
     match doctor::delete_doctor(&data.db, &id).await {
         Ok(_) => HttpResponse::Ok().json(json!({

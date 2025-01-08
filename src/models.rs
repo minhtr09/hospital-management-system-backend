@@ -59,12 +59,16 @@ pub struct DoctorResponse {
     pub phone: Option<String>,
     pub password: Option<String>,
     pub name: Option<String>,
-    pub gender: Option<i32>,
-    pub birthday: Option<String>,
-    pub address: Option<String>,
+    pub description: Option<String>,
+    pub role: Option<String>,
+    pub active: Option<i32>,
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
+    pub speciality: Option<String>,
+    pub speciality_id: Option<i32>,
+    pub room_id: Option<i32>,
+    pub recovery_token: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -241,6 +245,7 @@ pub struct RegisterRequest {
     pub password: String,
     pub name: String,
     pub role: String,
+    pub speciality_id: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -339,8 +344,13 @@ pub struct MedicineOfPrescription {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct UpdateTreatmentStatusRequest  {
+pub struct UpdateTreatmentStatusRequest {
     pub treatment_status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateStatusRequest {
+    pub status: String,
 }
 
 #[derive(Debug, Serialize)]
