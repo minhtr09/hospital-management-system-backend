@@ -84,6 +84,8 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(medical_record::get_self_medical_records)
             .service(medical_record::update_payment_status)
             .service(medical_record::create_medical_record)
+            .service(medical_record::get_medical_record_by_appointment)
+            .service(medical_record::update_diagnosis)
             .service(medical_record::get_vital_signs)
             .service(medical_record::create_vital_sign),
     )

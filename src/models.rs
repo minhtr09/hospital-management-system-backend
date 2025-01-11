@@ -306,7 +306,7 @@ pub struct MedicalRecordResponse {
 }
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicalRecord {
-    pub id: i32,
+    pub id: Option<i32>,
     pub appointment_id: Option<i32>,
     pub payment_status: Option<i32>,
     pub patient_id: Option<i32>,
