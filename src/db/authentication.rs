@@ -4,7 +4,7 @@ use sqlx::{PgPool, Row}; // Make sure to import necessary models
 pub async fn get_user_credentials(
     pool: &PgPool,
     login_req: &LoginRequest,
-) -> Result<Option<(i32, String, String)>, sqlx::Error> {
+) -> Result<Option<(i32, String, String, Option<i32>)>, sqlx::Error> {
     let is_patient = login_req.login_type == "patient";
     let is_doctor = login_req.login_type == "doctor";
     let is_receptionist = login_req.login_type == "receptionist";
@@ -12,15 +12,15 @@ pub async fn get_user_credentials(
     let is_admin = login_req.login_type == "admin";
 
     let query = if is_patient {
-        "SELECT id, password, name FROM tn_patients WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_patients WHERE email = $1"
     } else if is_doctor {
         "SELECT id, password, name, speciality_id FROM tn_doctors WHERE email = $1"
     } else if is_receptionist {
-        "SELECT id, password, name FROM tn_receptionist WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_receptionist WHERE email = $1"
     } else if is_staff {
-        "SELECT id, password, name FROM tn_staffs WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_staffs WHERE email = $1"
     } else if is_admin {
-        "SELECT id, password, name FROM tn_admins WHERE email = $1"
+        "SELECT id, password, name, NULL as speciality_id FROM tn_admins WHERE email = $1"
     } else {
         return Err(sqlx::Error::RowNotFound);
     };
@@ -38,8 +38,16 @@ pub async fn get_user_credentials(
         );
     }
 
-    Ok(row.map(|row| (row.get("id"), row.get("password"), row.get("name"))))
+    Ok(row.map(|row| {
+        (
+            row.get("id"),
+            row.get("password"),
+            row.get("name"),
+            row.get("speciality_id"),
+        )
+    }))
 }
+
 pub async fn create_user(
     pool: &PgPool,
     email: &str,
@@ -49,12 +57,14 @@ pub async fn create_user(
 ) -> Result<(), sqlx::Error> {
     let query = if role == "doctor" {
         "INSERT INTO tn_doctors (email, password, name) VALUES ($1, $2, $3)"
-    } else if role == "receptionist" {
-        "INSERT INTO tn_receptionist (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "admin" {
+        "INSERT INTO tn_admins (email, password, name) VALUES ($1, $2, $3)"
     } else if role == "patient" {
         "INSERT INTO tn_patients (email, password, name) VALUES ($1, $2, $3)"
     } else if role == "staff" {
         "INSERT INTO tn_staffs (email, password, name) VALUES ($1, $2, $3)"
+    } else if role == "admin" {
+        "INSERT INTO tn_admins (email, password, name) VALUES ($1, $2, $3)"
     } else {
         return Err(sqlx::Error::RowNotFound);
     };

@@ -59,12 +59,16 @@ pub struct DoctorResponse {
     pub phone: Option<String>,
     pub password: Option<String>,
     pub name: Option<String>,
-    pub gender: Option<i32>,
-    pub birthday: Option<String>,
-    pub address: Option<String>,
+    pub description: Option<String>,
+    pub role: Option<String>,
+    pub active: Option<i32>,
     pub avatar: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
+    pub speciality: Option<String>,
+    pub speciality_id: Option<i32>,
+    pub room_id: Option<i32>,
+    pub recovery_token: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -139,7 +143,7 @@ pub struct Treatment {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Appointment {
-    pub id: Option<i32>,
+    pub id: Option<i32>, // Đổi thành Option vì khi tạo mới sẽ chưa có id
     pub patient_id: i32,
     pub patient_name: Option<String>,
     pub patient_birthday: Option<String>,
@@ -149,9 +153,23 @@ pub struct Appointment {
     pub numerical_order: Option<i32>,
     pub appointment_time: String,
     pub status: Option<String>,
+    pub treatment_status: Option<String>,
     pub create_at: Option<NaiveDateTime>,
     pub update_at: Option<NaiveDateTime>,
     pub date: Option<NaiveDate>,
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct VitalSign {
+    pub id: i32,
+    pub medical_record_id: Option<i32>,
+    pub temperature: Option<i32>,
+    pub blood_pressure_systolic: Option<i32>,
+    pub blood_pressure_diastolic: Option<i32>,
+    pub heart_rate: Option<i32>,
+    pub spo2: Option<i32>,
+    pub weight: Option<i32>,
+    pub height: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -202,21 +220,13 @@ pub struct LoginRequest {
     pub password: String,
 }
 
-#[derive(Debug, Serialize)]
-pub struct UserData {
-    pub id: i32,
-    pub name: String,
-    pub speciality_id: Option<i32>,  // Optional vì chỉ bác sĩ mới có speciality_id
-}
-
 #[derive(Serialize)]
 pub struct LoginResponse {
     pub success: bool,
     pub message: String,
+    pub user_data: Option<UserData>, // Add user data to response
     #[serde(skip_serializing_if = "Option::is_none")]
     pub data: Option<TokenData>,
-    pub user: Option<UserData>,  // Thêm trường user
-
 }
 
 #[derive(Serialize)]
@@ -248,6 +258,7 @@ pub struct RegisterRequest {
     pub password: String,
     pub name: String,
     pub role: String,
+    pub speciality_id: Option<i32>,
 }
 
 #[derive(Deserialize)]
@@ -295,7 +306,7 @@ pub struct MedicalRecordResponse {
 }
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicalRecord {
-    pub id: i32,
+    pub id: Option<i32>,
     pub appointment_id: Option<i32>,
     pub payment_status: Option<i32>,
     pub patient_id: Option<i32>,
@@ -305,13 +316,14 @@ pub struct MedicalRecord {
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct Invoice {
+    pub id: i32,
     pub medical_record_id: Option<i32>,
     pub time: Option<NaiveDateTime>,
     pub total_price: Option<i32>,
+    pub service_ids: Option<Vec<i32>>,
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
-
 pub struct Medicine {
     pub id: i32,
     pub name: Option<String>,
@@ -344,7 +356,35 @@ pub struct MedicineOfPrescription {
     pub quantity: Option<i32>,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdateTreatmentStatusRequest {
+    pub treatment_status: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct UpdateStatusRequest {
     pub status: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct UserData {
+    pub id: i32,
+    pub name: String,
+    pub role: String,
+    pub speciality_id: Option<i32>, // Optional since only doctors have this
+}
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct InvoiceResponse {
+    pub id: i32,
+    pub medical_record_id: Option<i32>,
+    pub time: Option<NaiveDateTime>,
+    pub total_price: Option<i32>,
+    pub service_names: Option<Vec<String>>,
+    pub service_prices: Option<Vec<i32>>,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct UpdatePasswordRequest {
+    pub new_password: String,
+    pub email: String,
 }

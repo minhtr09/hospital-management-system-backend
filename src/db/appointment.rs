@@ -75,6 +75,22 @@ pub async fn update_appointment_status(
         .map_err(Error::Database)?;
     Ok(())
 }
+
+pub async fn update_appointment_treatment_status(
+    pool: &PgPool,
+    id: i32,
+    treatment_status: String,
+) -> Result<(), Error> {
+    let query = "UPDATE tn_appointments SET treatment_status = $1 WHERE id = $2";
+    sqlx::query(query)
+        .bind(treatment_status)
+        .bind(id)
+        .execute(pool)
+        .await
+        .map_err(Error::Database)?;
+    Ok(())
+}
+
 pub async fn update_appointment_time(
     pool: &PgPool,
     id: i32,
@@ -120,7 +136,7 @@ pub async fn get_appointment_history(
     pool: &PgPool,
     patient_id: i32,
 ) -> Result<Vec<AppointmentHistoryResponse>, Error> {
-    let query = "	SELECT 
+    let query = "SELECT 
     a.id,                               
     a.appointment_time, 
 	a.date,

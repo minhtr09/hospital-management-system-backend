@@ -2,9 +2,10 @@ use std::ptr::null;
 
 use crate::db::{authentication, doctor, patient};
 use crate::models::{
-    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData, UserData,
+    LoginRequest, LoginResponse, PasswordResetRequest, RegisterRequest, TokenData,
+    UpdatePasswordRequest, UserData,
 };
-use actix_web::{get, post, web, HttpResponse};
+use actix_web::{get, post, put, web, HttpResponse};
 use bcrypt::{hash, DEFAULT_COST};
 use chrono::{Duration, Utc};
 use jsonwebtoken::{encode, EncodingKey, Header};
@@ -14,7 +15,6 @@ use lettre::{Message, SmtpTransport, Transport};
 use rand::distributions::{Alphanumeric, DistString};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use sqlx::Row; // Add this import
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
@@ -32,49 +32,50 @@ fn verify_password(password: &str, hash: &str) -> bool {
 pub async fn login(
     data: web::Data<crate::AppState>,
     login_req: web::Json<LoginRequest>,
-) -> Result<HttpResponse, actix_web::Error> {
+) -> HttpResponse {
     let pool = &data.db;
 
     println!("login request: {:?}", login_req);
 
     // Query the database using the authentication module
-    let credentials: (i32, String, String) = match authentication::get_user_credentials(pool, &login_req).await {
-        Ok(Some(creds)) => creds,
-        Ok(None) => {
-            return Ok(HttpResponse::Unauthorized().json(LoginResponse {
-                success: false,
-                message: "Invalid credentials".to_string(),
-                data: None,
-                user: None,  
-            }));
-        }
-        Err(_) => {
-            return Ok(HttpResponse::InternalServerError().json(LoginResponse {
-                success: false,
-                message: "Database error".to_string(),
-                data: None,
-                user: None,  
-            }));
-        }
-    };
+    let credentials: (i32, String, String, Option<i32>) =
+        match authentication::get_user_credentials(pool, &login_req).await {
+            Ok(Some(creds)) => creds,
+            Ok(None) => {
+                return HttpResponse::Unauthorized().json(LoginResponse {
+                    success: false,
+                    message: "Wrong email or password".to_string(),
+                    data: None,
+                    user_data: None,
+                });
+            }
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(LoginResponse {
+                    success: false,
+                    message: "Database error".to_string(),
+                    data: None,
+                    user_data: None,
+                });
+            }
+        };
 
     // Check if user exists
-    let (id, hashed_password, name) = credentials;
+    let (id, hashed_password, name, speciality_id) = credentials;
 
     // Verify password
     if !verify_password(&login_req.password, &hashed_password) {
-        return Ok(HttpResponse::Unauthorized().json(LoginResponse {
+        return HttpResponse::Unauthorized().json(LoginResponse {
             success: false,
             message: "Invalid credentials".to_string(),
             data: None,
-            user: None,  
-        }));
+            user_data: None,
+        });
     }
 
     // Generate JWT token
     let claims = Claims {
         sub: id.to_string(),
-        name: name.clone(), // Thêm .clone() ở đây
+        name: name.clone(),
         role: login_req.login_type.clone(),
         exp: (Utc::now() + Duration::hours(24)).timestamp(),
     };
@@ -88,16 +89,7 @@ pub async fn login(
     )
     .unwrap();
 
-    let speciality_id = match sqlx::query("SELECT speciality_id FROM tn_doctors WHERE id = $1")
-        .bind(id)
-        .fetch_optional(pool)
-        .await
-    {
-        Ok(row) => row.map(|r| r.get("speciality_id")),
-        Err(_) => None,
-    };
-
-    Ok(HttpResponse::Ok().json(LoginResponse {
+    HttpResponse::Ok().json(LoginResponse {
         success: true,
         message: "Login successful".to_string(),
         data: Some(TokenData {
@@ -105,12 +97,13 @@ pub async fn login(
             token_type: "Bearer".to_string(),
             expires_in: 86400, // 24 hours in seconds
         }),
-        user: Some(UserData {
+        user_data: Some(UserData {
             id,
-            name,  // Giờ có thể sử dụng name ở đây
+            name,
+            role: login_req.login_type.clone(),
             speciality_id,
         }),
-    }))
+    })
 }
 
 #[post("/register")]
@@ -134,7 +127,7 @@ pub async fn register(
                 success: false,
                 message: "Password hashing failed".to_string(),
                 data: None,
-                user: None,  
+                user_data: None,
             });
         }
     };
@@ -153,7 +146,7 @@ pub async fn register(
             success: true,
             message: "User registered successfully".to_string(),
             data: None,
-            user: None,  
+            user_data: None,
         }),
         Err(e) => {
             // You might want to handle different error types differently
@@ -161,7 +154,7 @@ pub async fn register(
                 success: false,
                 message: format!("Registration failed: {}", e),
                 data: None,
-                user: None,  
+                user_data: None,
             })
         }
     }
@@ -263,5 +256,109 @@ pub async fn get_role(data: web::Data<crate::AppState>, email: web::Path<String>
             "success": false,
             "message": "Failed to get role"
         })),
+    }
+}
+
+#[put("/update-password")]
+pub async fn update_password(
+    data: web::Data<crate::AppState>,
+    claims: web::ReqData<Claims>,
+    new_password: web::Json<UpdatePasswordRequest>,
+) -> HttpResponse {
+    let pool = &data.db;
+
+    let hashed_password = match hash(&new_password.new_password, DEFAULT_COST) {
+        Ok(hashed) => hashed,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": "Password generation failed"
+            }));
+        }
+    };
+
+    match authentication::update_password(pool, &claims.role, &new_password.email, &hashed_password)
+        .await
+    {
+        Ok(_) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Password updated successfully"
+        })),
+        Err(_) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": "Failed to update password"
+        })),
+    }
+}
+
+#[post("/register-with-admin")]
+pub async fn admin_create_user(
+    data: web::Data<crate::AppState>,
+    claims: web::ReqData<Claims>,
+    register_req: web::Json<RegisterRequest>,
+) -> HttpResponse {
+    let pool = &data.db;
+    if claims.role != "admin" {
+        return HttpResponse::BadRequest().json(json!({
+            "success": false,
+            "message": "Only admin can create user"
+        }));
+    }
+    // Hash the password
+    let hashed_password = match hash(&register_req.password, DEFAULT_COST) {
+        Ok(hashed) => hashed,
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(LoginResponse {
+                success: false,
+                message: "Password hashing failed".to_string(),
+                data: None,
+                user_data: None,
+            });
+        }
+    };
+
+    // Attempt to create the user
+    match authentication::create_user(
+        pool,
+        &register_req.email,
+        &hashed_password,
+        &register_req.name,
+        &register_req.role,
+    )
+    .await
+    {
+        Ok(_) => (),
+        Err(_) => {
+            return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                "message": "Failed to create user"
+            }));
+        }
+    }
+
+    if register_req.role == "doctor" {
+        match doctor::update_doctor_speciality(
+            pool,
+            register_req.email.clone(),
+            &register_req.speciality_id.unwrap(),
+        )
+        .await
+        {
+            Ok(_) => HttpResponse::Ok().json(json!({
+                "success": true,
+                "message": "Doctor registered successfully"
+            })),
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(json!({
+                "success": false,
+                    "message": "Failed to update doctor speciality"
+                }));
+            }
+        }
+    } else {
+        HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "User registered successfully"
+        }))
     }
 }

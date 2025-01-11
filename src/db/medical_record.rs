@@ -1,5 +1,5 @@
 use crate::error::Error;
-use crate::models::{MedicalRecord, MedicalRecordResponse};
+use crate::models::{MedicalRecord, MedicalRecordResponse, VitalSign};
 use sqlx::PgPool;
 
 enum PaymentStatus {
@@ -50,6 +50,39 @@ pub async fn update_payment_status(pool: &PgPool, id: i32) -> Result<(), Error> 
          WHERE id = $2",
         PaymentStatus::Paid as i32,
         id
+    )
+    .execute(pool)
+    .await
+    .map_err(Error::Database)?;
+
+    Ok(())
+}
+
+pub async fn get_vital_signs(
+    pool: &PgPool,
+    medical_record_id: i32,
+) -> Result<Vec<VitalSign>, Error> {
+    sqlx::query_as!(
+        VitalSign,
+        "SELECT * FROM tn_vital_signs WHERE medical_record_id = $1",
+        medical_record_id
+    )
+    .fetch_all(pool)
+    .await
+    .map_err(Error::Database)
+}
+
+pub async fn create_vital_sign(pool: &PgPool, vital_sign: &VitalSign) -> Result<(), Error> {
+    sqlx::query!(
+        "INSERT INTO tn_vital_signs (medical_record_id, temperature, blood_pressure_systolic, blood_pressure_diastolic, heart_rate, spo2, weight, height) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        vital_sign.medical_record_id,
+        vital_sign.temperature,
+        vital_sign.blood_pressure_systolic,
+        vital_sign.blood_pressure_diastolic,
+        vital_sign.heart_rate,
+        vital_sign.spo2,
+        vital_sign.weight,
+        vital_sign.height
     )
     .execute(pool)
     .await
