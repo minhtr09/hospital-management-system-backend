@@ -159,6 +159,19 @@ pub struct Appointment {
     pub date: Option<NaiveDate>,
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct VitalSign {
+    pub id: i32,
+    pub medical_record_id: Option<i32>,
+    pub temperature: Option<i32>,
+    pub blood_pressure_systolic: Option<i32>,
+    pub blood_pressure_diastolic: Option<i32>,
+    pub heart_rate: Option<i32>,
+    pub spo2: Option<i32>,
+    pub weight: Option<i32>,
+    pub height: Option<i32>,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub struct AppointmentCreateForm {
     pub patient_id: i32,
