@@ -1,6 +1,6 @@
-use crate::db::medical_record;
 use crate::error::Error;
 use crate::models::MedicalRecord;
+use crate::{db::medical_record, models::VitalSign};
 use actix_web::{get, post, put, web, HttpResponse, Responder};
 use serde_json::json;
 use sqlx::PgPool;
@@ -80,6 +80,50 @@ pub async fn update_payment_status(
     }
 }
 
+#[get("/vital-signs/{medical_record_id}")]
+pub async fn get_vital_signs(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+) -> impl Responder {
+    let medical_record_id = path.into_inner();
+    match medical_record::get_vital_signs(&data.db, medical_record_id).await {
+        Ok(vital_signs) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": vital_signs,
+            "message": "Vital signs retrieved successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve vital signs: {}", e)
+        })),
+    }
+}
+
+#[post("/vital-signs")]
+pub async fn create_vital_sign(
+    data: web::Data<crate::AppState>,
+    claims: web::ReqData<Claims>,
+    vital_sign: web::Json<VitalSign>,
+) -> impl Responder {
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Only doctor can create vital sign"
+        }));
+    }
+
+    match medical_record::create_vital_sign(&data.db, &vital_sign.into_inner()).await {
+        Ok(_) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Vital sign created successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to create vital sign: {}", e)
+        })),
+    }
+}
+    
 #[put("/diagnosis/{id}")]
 pub async fn update_diagnosis(
     data: web::Data<crate::AppState>,

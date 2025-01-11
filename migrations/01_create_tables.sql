@@ -207,6 +207,17 @@ ALTER TABLE tn_invoices ADD COLUMN service_ids integer[];
 
 ALTER TABLE tn_appointments ADD COLUMN treatment_status varchar(15);
 
-
+CREATE TABLE tn_vital_signs (
+    id SERIAL PRIMARY KEY, -- or AUTO_INCREMENT for MySQL
+	medical_record_id int,
+    temperature int,
+    blood_pressure_systolic int,
+    blood_pressure_diastolic int,
+    heart_rate int,
+    spO2 int,
+    weight int,
+    height int,
+	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id)
+);
 
 
