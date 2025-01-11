@@ -79,3 +79,68 @@ pub async fn update_payment_status(
         })),
     }
 }
+
+#[put("/diagnosis/{id}")]
+pub async fn update_diagnosis(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    claims: web::ReqData<Claims>,
+    update_req: web::Json<serde_json::Value>,
+) -> impl Responder {
+    if claims.role != "doctor" {
+        return HttpResponse::Forbidden().json(json!({
+            "success": false,
+            "message": "Only doctor can update diagnosis"
+        }));
+    }
+
+    let id = path.into_inner();
+    let diagnosis = update_req.get("diagnosis")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
+    match medical_record::update_diagnosis(&data.db, id, diagnosis).await {
+        Ok(_) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "message": "Diagnosis updated successfully"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to update diagnosis: {}", e)
+        })),
+    }
+}
+
+#[get("/appointment/{appointment_id}")]
+pub async fn get_medical_record_by_appointment(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+    claims: web::ReqData<Claims>,
+) -> impl Responder {
+    let appointment_id = path.into_inner();
+
+    match medical_record::get_by_appointment_id(&data.db, appointment_id).await {
+        Ok(record) => {
+            // Kiểm tra quyền truy cập - chỉ cho phép bác sĩ hoặc bệnh nhân của record này
+            if claims.role == "doctor" || record.patient_id.map_or(false, |pid| claims.sub.parse::<i32>().unwrap() == pid) {                HttpResponse::Ok().json(json!({
+                    "success": true,
+                    "data": record,
+                    "message": "Medical record retrieved successfully"
+                }))
+            } else {
+                HttpResponse::Forbidden().json(json!({
+                    "success": false,
+                    "message": "You don't have permission to access this medical record"
+                }))
+            }
+        }
+        Err(Error::NotFound) => HttpResponse::NotFound().json(json!({
+            "success": false,
+            "message": "Medical record not found"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve medical record: {}", e)
+        })),
+    }
+}

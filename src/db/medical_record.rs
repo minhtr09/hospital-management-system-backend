@@ -57,3 +57,42 @@ pub async fn update_payment_status(pool: &PgPool, id: i32) -> Result<(), Error> 
 
     Ok(())
 }
+
+pub async fn update_diagnosis(pool: &PgPool, id: i32, diagnosis: &str) -> Result<(), Error> {
+    sqlx::query!(
+        "UPDATE tn_medical_records 
+         SET diagnosis = $1
+         WHERE id = $2",
+        diagnosis,
+        id
+    )
+    .execute(pool)
+    .await
+    .map_err(Error::Database)?;
+
+    Ok(())
+}
+
+pub async fn get_by_appointment_id(
+    pool: &PgPool,
+    appointment_id: i32,
+) -> Result<MedicalRecordResponse, Error> {
+    let record = sqlx::query_as!(
+        MedicalRecordResponse,
+        "SELECT mr.id, mr.appointment_id, mr.payment_status, mr.patient_id, 
+        mr.diagnosis, d.name as doctor_name, a.date
+        FROM tn_medical_records mr
+        JOIN tn_doctors d ON mr.doctor_id = d.id
+        JOIN tn_appointments a ON mr.appointment_id = a.id
+        WHERE mr.appointment_id = $1",
+        appointment_id
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(Error::Database)?;
+    
+    match record {
+        Some(record) => Ok(record),
+        None => Err(Error::NotFound)  
+    }
+}
