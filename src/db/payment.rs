@@ -1,5 +1,6 @@
 use crate::error::Error;
 use crate::models::{Invoice, InvoiceResponse};
+use chrono::Utc;
 use sqlx::PgPool;
 pub async fn get_invoices_of_medical_record(
     pool: &PgPool,
@@ -21,7 +22,7 @@ pub async fn create_invoice(pool: &PgPool, invoice: Invoice) -> Result<(), Error
          VALUES ($1, $2, $3, $4) 
          RETURNING id, medical_record_id, time, total_price, service_ids",
         invoice.medical_record_id,
-        invoice.time,
+        Utc::now().naive_utc(),
         invoice.total_price,
         invoice.service_ids.as_deref(),
     )

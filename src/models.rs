@@ -351,8 +351,8 @@ pub struct MedicineCreateForm {
 #[derive(Debug, Serialize, Deserialize, FromRow)]
 pub struct MedicineOfPrescription {
     pub id: i32,
-    pub medical_record_id: i32,
-    pub medicine_id: i32,
+    pub medical_record_id: Option<i32>,
+    pub medicine_ids: Option<Vec<i32>>,
     pub quantity: Option<i32>,
 }
 

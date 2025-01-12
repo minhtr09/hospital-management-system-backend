@@ -123,9 +123,28 @@ pub async fn get_by_appointment_id(
     .fetch_optional(pool)
     .await
     .map_err(Error::Database)?;
-    
+
     match record {
         Some(record) => Ok(record),
-        None => Err(Error::NotFound)  
+        None => Err(Error::NotFound),
     }
 }
+
+pub async fn is_medical_record_exist(
+    pool: &PgPool,
+    appointment_id: i32,
+) -> Result<(bool, Option<i32>), Error> {
+    let record = sqlx::query!(
+        "SELECT COUNT(*) as count, id FROM tn_medical_records WHERE appointment_id = $1 GROUP BY id",
+        appointment_id
+    )
+    .fetch_optional(pool)
+    .await
+    .map_err(Error::Database)?;
+
+    match record {
+        Some(r) => Ok((r.count > Some(0), Some(r.id))),
+        None => Ok((false, None)),
+    }
+}
+
