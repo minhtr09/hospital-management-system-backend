@@ -220,4 +220,11 @@ CREATE TABLE tn_vital_signs (
 	FOREIGN KEY (medical_record_id) REFERENCES tn_medical_records(id)
 );
 
+-- Remove the existing medicine_id column and its foreign key constraint
+ALTER TABLE medicine_of_prescription 
+    DROP CONSTRAINT medicine_of_prescription_medicine_id_fkey,
+    DROP COLUMN medicine_id;
 
+-- Add new column for array of medicine IDs
+ALTER TABLE medicine_of_prescription 
+    ADD COLUMN medicine_ids integer[];

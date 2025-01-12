@@ -76,7 +76,9 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(medicine::get_medicines)
             .service(medicine::get_medicine_by_id)
             .service(medicine::create_medicine)
-            .service(medicine::delete_medicine),
+            .service(medicine::delete_medicine)
+            .service(medicine::create_medicine_of_prescription)
+            .service(medicine::get_medicine_of_prescription),
     )
     .service(
         web::scope("/api/medical-record")
@@ -86,6 +88,7 @@ fn configure_app(cfg: &mut web::ServiceConfig, jwt_secret: String) {
             .service(medical_record::create_medical_record)
             .service(medical_record::get_medical_record_by_appointment)
             .service(medical_record::update_diagnosis)
+            .service(medical_record::is_medical_record_exist)
             .service(medical_record::get_vital_signs)
             .service(medical_record::create_vital_sign),
     )
