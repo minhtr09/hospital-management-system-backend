@@ -151,3 +151,59 @@ pub async fn get_role(pool: &PgPool, email: &str) -> Result<String, sqlx::Error>
     // If email not found in any table
     Err(sqlx::Error::RowNotFound)
 }
+
+pub async fn get_user_email(pool: &PgPool, user_id: &str) -> Result<Option<String>, sqlx::Error> {
+    // Parse the user_id from string to i32
+    let user_id = user_id.parse::<i32>().map_err(|_| {
+        sqlx::Error::Protocol("Invalid user ID format".into())
+    })?;
+
+    // Query to get user email from all possible user tables
+    let query = r#"
+        SELECT email FROM (
+            SELECT email FROM tn_patients WHERE id = $1
+            UNION ALL
+            SELECT email FROM tn_doctors WHERE id = $1
+            UNION ALL
+            SELECT email FROM tn_admins WHERE id = $1
+        ) AS users
+        LIMIT 1
+    "#;
+
+    let result = sqlx::query_scalar::<_, String>(query)
+        .bind(user_id)
+        .fetch_optional(pool)
+        .await?;
+
+    Ok(result)
+}
+
+// Optional: Add a function to verify current password before allowing changes
+pub async fn verify_current_password(
+    pool: &PgPool, 
+    email: &str, 
+    role: &str,
+    current_password: &str
+) -> Result<bool, sqlx::Error> {
+    let table_name = match role {
+        "patient" => "tn_patients",
+        "doctor" => "tn_doctors", 
+        "admin" => "tn_admins",
+        _ => return Ok(false),
+    };
+
+    let query = format!(
+        "SELECT password FROM {} WHERE email = $1",
+        table_name
+    );
+
+    let stored_hash: Option<String> = sqlx::query_scalar(&query)
+        .bind(email)
+        .fetch_optional(pool)
+        .await?;
+
+    match stored_hash {
+        Some(hash) => Ok(bcrypt::verify(current_password, &hash).unwrap_or(false)),
+        None => Ok(false),
+    }
+}

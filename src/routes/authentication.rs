@@ -267,6 +267,55 @@ pub async fn update_password(
 ) -> HttpResponse {
     let pool = &data.db;
 
+    // For non-admin users, verify they're changing their own password
+    if claims.role != "admin" {
+        match authentication::get_user_email(pool, &claims.sub).await {
+            Ok(Some(user_email)) => {
+                if user_email != new_password.email {
+                    return HttpResponse::Forbidden().json(json!({
+                        "success": false,
+                        "message": "You can only change your own password"
+                    }));
+                }
+            }
+            Ok(None) => {
+                return HttpResponse::NotFound().json(json!({
+                    "success": false,
+                    "message": "User not found"
+                }));
+            }
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(json!({
+                    "success": false,
+                    "message": "Failed to verify user"
+                }));
+            }
+        }
+
+        // Verify current password for non-admin users
+        match authentication::verify_current_password(
+            pool,
+            &new_password.email,
+            &claims.role,
+            &new_password.current_password
+        ).await {
+            Ok(true) => (),  // Password verified, continue
+            Ok(false) => {
+                return HttpResponse::Unauthorized().json(json!({
+                    "success": false,
+                    "message": "Current password is incorrect"
+                }));
+            }
+            Err(_) => {
+                return HttpResponse::InternalServerError().json(json!({
+                    "success": false,
+                    "message": "Failed to verify current password"
+                }));
+            }
+        }
+    }
+
+    // Hash the new password
     let hashed_password = match hash(&new_password.new_password, DEFAULT_COST) {
         Ok(hashed) => hashed,
         Err(_) => {
@@ -277,9 +326,8 @@ pub async fn update_password(
         }
     };
 
-    match authentication::update_password(pool, &claims.role, &new_password.email, &hashed_password)
-        .await
-    {
+    // Update the password in the database
+    match authentication::update_password(pool, &claims.role, &new_password.email, &hashed_password).await {
         Ok(_) => HttpResponse::Ok().json(json!({
             "success": true,
             "message": "Password updated successfully"
@@ -362,3 +410,4 @@ pub async fn admin_create_user(
         }))
     }
 }
+
