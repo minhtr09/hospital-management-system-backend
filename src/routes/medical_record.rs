@@ -123,7 +123,7 @@ pub async fn create_vital_sign(
         })),
     }
 }
-    
+
 #[put("/diagnosis/{id}")]
 pub async fn update_diagnosis(
     data: web::Data<crate::AppState>,
@@ -139,7 +139,8 @@ pub async fn update_diagnosis(
     }
 
     let id = path.into_inner();
-    let diagnosis = update_req.get("diagnosis")
+    let diagnosis = update_req
+        .get("diagnosis")
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
@@ -166,7 +167,12 @@ pub async fn get_medical_record_by_appointment(
     match medical_record::get_by_appointment_id(&data.db, appointment_id).await {
         Ok(record) => {
             // Kiểm tra quyền truy cập - chỉ cho phép bác sĩ hoặc bệnh nhân của record này
-            if claims.role == "doctor" || record.patient_id.map_or(false, |pid| claims.sub.parse::<i32>().unwrap() == pid) {                HttpResponse::Ok().json(json!({
+            if claims.role == "doctor"
+                || record
+                    .patient_id
+                    .map_or(false, |pid| claims.sub.parse::<i32>().unwrap() == pid)
+            {
+                HttpResponse::Ok().json(json!({
                     "success": true,
                     "data": record,
                     "message": "Medical record retrieved successfully"
@@ -181,6 +187,29 @@ pub async fn get_medical_record_by_appointment(
         Err(Error::NotFound) => HttpResponse::NotFound().json(json!({
             "success": false,
             "message": "Medical record not found"
+        })),
+        Err(e) => HttpResponse::InternalServerError().json(json!({
+            "success": false,
+            "message": format!("Failed to retrieve medical record: {}", e)
+        })),
+    }
+}
+
+#[get("/is-medical-record-exist/{appointment_id}")]
+pub async fn is_medical_record_exist(
+    data: web::Data<crate::AppState>,
+    path: web::Path<i32>,
+) -> impl Responder {
+    let appointment_id = path.into_inner();
+
+    match medical_record::is_medical_record_exist(&data.db, appointment_id).await {
+        Ok(medical_record) => HttpResponse::Ok().json(json!({
+            "success": true,
+            "data": {
+                "exist": medical_record.0,
+                "id": medical_record.1
+            },
+            "message": "Medical record retrieved successfully"
         })),
         Err(e) => HttpResponse::InternalServerError().json(json!({
             "success": false,
